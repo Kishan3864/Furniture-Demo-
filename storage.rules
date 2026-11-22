@@ -1,0 +1,38 @@
+rules_version = '2';
+
+// WoodBook - Storage rules
+// Images are shown on the public status page through Firebase download URLs (token based),
+// so direct reads stay limited to signed-in staff.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isStaff() {
+      return request.auth != null
+        && firestore.exists(/databases/(default)/documents/users/$(request.auth.uid));
+    }
+    function isOwner() {
+      return request.auth != null
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'owner';
+    }
+    function isImage() {
+      return request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    match /orders/{orderId}/{folder}/{file} {
+      allow read: if isStaff();
+      allow create, update: if isStaff() && isImage();
+      allow delete: if isOwner();
+    }
+
+    match /workshop/{file} {
+      allow read: if isStaff();
+      allow create, update: if isOwner() && isImage();
+      allow delete: if isOwner();
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

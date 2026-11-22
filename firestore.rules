@@ -1,0 +1,99 @@
+rules_version = '2';
+
+// WoodBook - Firestore security rules
+// Roles: owner (full access), karigar (only own assigned jobs, no money data)
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function userPath() { return /databases/$(database)/documents/users/$(request.auth.uid); }
+    function hasProfile() { return signedIn() && exists(userPath()); }
+    function me() { return get(userPath()).data; }
+    function isOwner() { return hasProfile() && me().role == 'owner' && me().active != false; }
+    function isKarigar() { return hasProfile() && me().role == 'karigar' && me().active != false; }
+    function myKarigarId() { return me().karigarId; }
+    function karigarAssigned(data) { return isKarigar() && myKarigarId() in data.karigarIds; }
+    function onlyChanges(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+
+    // First user who signs up becomes owner (one-time bootstrap)
+    match /meta/owner {
+      allow get: if signedIn();
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    match /users/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || isOwner());
+      allow list: if isOwner();
+      allow create: if isOwner() || (
+        signedIn() && request.auth.uid == uid
+        && request.resource.data.role == 'owner'
+        && !exists(/databases/$(database)/documents/meta/owner)
+        && getAfter(/databases/$(database)/documents/meta/owner).data.uid == uid
+      );
+      allow update, delete: if isOwner();
+    }
+
+    match /settings/{doc} {
+      allow read: if hasProfile();
+      allow write: if isOwner();
+    }
+
+    match /counters/{doc} {
+      allow read, write: if isOwner();
+    }
+
+    // Job data (no prices). Karigar can read/update only assigned jobs, only stage + photos.
+    match /orders/{id} {
+      allow read: if isOwner() || karigarAssigned(resource.data);
+      allow create, delete: if isOwner();
+      allow update: if isOwner() || (
+        karigarAssigned(resource.data)
+        && onlyChanges(['stage', 'stageIndex', 'progress', 'stageHistory', 'progressPhotos', 'updatedAt', 'deliveredAt'])
+      );
+    }
+
+    // Public read-only status page mirror, keyed by unguessable token
+    match /status/{token} {
+      allow get: if true;
+      allow list: if false;
+      allow create, delete: if isOwner();
+      allow update: if isOwner() || (
+        karigarAssigned(resource.data)
+        && onlyChanges(['stage', 'stageIndex', 'progress', 'photos', 'updatedAt'])
+      );
+    }
+
+    // Compressed photos stored in Firestore (used while Cloud Storage is not enabled).
+    // Get-by-id is public (ids are random) so the customer status page can show photos.
+    match /images/{id} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if hasProfile()
+        && request.resource.data.data is string
+        && request.resource.data.data.size() < 1000000;
+      allow update: if false;
+      allow delete: if isOwner();
+    }
+
+    match /karigars/{id} {
+      allow get: if isOwner() || (isKarigar() && myKarigarId() == id);
+      allow list, write: if isOwner();
+    }
+
+    // Money + business data: owner only
+    match /customers/{id} { allow read, write: if isOwner(); }
+    match /finance/{id} { allow read, write: if isOwner(); }
+    match /payments/{id} { allow read, write: if isOwner(); }
+    match /labour/{id} { allow read, write: if isOwner(); }
+    match /stock/{id} { allow read, write: if isOwner(); }
+    match /stockMoves/{id} { allow read, write: if isOwner(); }
+    match /expenses/{id} { allow read, write: if isOwner(); }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

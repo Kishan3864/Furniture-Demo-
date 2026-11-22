@@ -1,0 +1,322 @@
+'use client';
+
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  Boxes,
+  ChartColumn,
+  ClipboardList,
+  Ellipsis,
+  Hammer,
+  House,
+  LogOut,
+  Plus,
+  Receipt,
+  Search,
+  Settings,
+  Truck,
+  Users,
+  Wallet,
+  WifiOff,
+  Wrench,
+  X,
+} from 'lucide-react';
+import { useAuth } from '@/lib/auth';
+import { useData } from '@/lib/data';
+import { cn } from '@/lib/utils';
+import { Button, LinkButton, PageLoader } from './ui';
+import { GlobalSearch } from './global-search';
+import { StoredImg } from './stored-image';
+
+interface NavItem {
+  href: string;
+  label: string;
+  icon: ReactNode;
+}
+
+const OWNER_NAV: NavItem[] = [
+  { href: '/', label: 'Dashboard', icon: <House className="h-5 w-5" /> },
+  { href: '/orders', label: 'Orders', icon: <ClipboardList className="h-5 w-5" /> },
+  { href: '/board', label: 'Kaam kahan tak', icon: <Hammer className="h-5 w-5" /> },
+  { href: '/delivery', label: 'Delivery', icon: <Truck className="h-5 w-5" /> },
+  { href: '/customers', label: 'Grahak', icon: <Users className="h-5 w-5" /> },
+  { href: '/payments', label: 'Payments', icon: <Wallet className="h-5 w-5" /> },
+  { href: '/karigar', label: 'Karigar', icon: <Wrench className="h-5 w-5" /> },
+  { href: '/stock', label: 'Stock', icon: <Boxes className="h-5 w-5" /> },
+  { href: '/expenses', label: 'Kharcha', icon: <Receipt className="h-5 w-5" /> },
+  { href: '/reports', label: 'Reports', icon: <ChartColumn className="h-5 w-5" /> },
+  { href: '/settings', label: 'Settings', icon: <Settings className="h-5 w-5" /> },
+];
+
+const KARIGAR_NAV: NavItem[] = [{ href: '/jobs', label: 'Mera Kaam', icon: <Hammer className="h-5 w-5" /> }];
+
+const MOBILE_MAIN = ['/', '/orders', '/board', '/delivery'];
+
+function isActive(path: string, href: string) {
+  if (href === '/') return path === '/';
+  return path === href || path.startsWith(href + '/');
+}
+
+function useOnline() {
+  const [online, setOnline] = useState(true);
+  useEffect(() => {
+    setOnline(navigator.onLine);
+    const on = () => setOnline(true);
+    const off = () => setOnline(false);
+    window.addEventListener('online', on);
+    window.addEventListener('offline', off);
+    return () => {
+      window.removeEventListener('online', on);
+      window.removeEventListener('offline', off);
+    };
+  }, []);
+  return online;
+}
+
+export function Logo({ compact }: { compact?: boolean }) {
+  const { settings } = useData();
+  return (
+    <div className="flex min-w-0 items-center gap-2.5">
+      {settings.logoUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <StoredImg src={settings.logoUrl} alt="" className="h-9 w-9 rounded-xl bg-white object-contain" />
+      ) : (
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-wood-600 to-wood-800 text-sm font-extrabold text-cream-50">
+          WB
+        </div>
+      )}
+      {!compact && (
+        <div className="min-w-0 leading-tight">
+          <p className="truncate font-bold text-wood-950">WoodBook</p>
+          <p className="truncate text-[11px] text-wood-600">{settings.name || 'Brighton Solution'}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function AppShell({ children }: { children: ReactNode }) {
+  const { ready, fbUser, user, isOwner, isKarigar, noProfile, logout } = useAuth();
+  const router = useRouter();
+  const path = usePathname();
+  const online = useOnline();
+  const [more, setMore] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  useEffect(() => {
+    if (ready && !fbUser) router.replace('/login');
+  }, [ready, fbUser, router]);
+
+  useEffect(() => {
+    if (isKarigar && !path.startsWith('/jobs')) router.replace('/jobs');
+  }, [isKarigar, path, router]);
+
+  useEffect(() => {
+    setMore(false);
+  }, [path]);
+
+  useEffect(() => {
+    if (!isOwner) return;
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isOwner]);
+
+  const nav = isOwner ? OWNER_NAV : KARIGAR_NAV;
+  const mobileMain = useMemo(() => OWNER_NAV.filter((n) => MOBILE_MAIN.includes(n.href)), []);
+  const mobileMore = useMemo(() => OWNER_NAV.filter((n) => !MOBILE_MAIN.includes(n.href)), []);
+
+  if (!ready || (fbUser && !user && !noProfile)) return <PageLoader />;
+  if (!fbUser) return <PageLoader label="Login page khul raha hai..." />;
+  if (noProfile)
+    return (
+      <div className="flex min-h-screen items-center justify-center p-6">
+        <div className="max-w-sm rounded-2xl border border-wood-100 bg-white p-6 text-center shadow-soft">
+          <p className="text-lg font-bold text-wood-950">Account active nahi hai</p>
+          <p className="mt-2 text-sm text-wood-700">
+            Aapka login ({fbUser.email}) abhi kisi workshop se juda nahi hai ya band kar diya gaya hai. Owner se baat karein.
+          </p>
+          <Button className="mt-5 w-full" variant="outline" icon={<LogOut className="h-4 w-4" />} onClick={logout}>
+            Logout
+          </Button>
+        </div>
+      </div>
+    );
+  if (isKarigar && !path.startsWith('/jobs')) return <PageLoader />;
+
+  return (
+    <div className="min-h-screen lg:pl-64">
+      {/* Desktop sidebar */}
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-wood-100 bg-cream-50 lg:flex">
+        <div className="px-4 py-4">
+          <Logo />
+        </div>
+        {isOwner && (
+          <div className="px-3 pb-2">
+            <LinkButton href="/orders/new" className="w-full" icon={<Plus className="h-4 w-4" />}>
+              Naya Order
+            </LinkButton>
+          </div>
+        )}
+        <nav className="scrollbar-thin flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
+          {nav.map((n) => (
+            <Link
+              key={n.href}
+              href={n.href}
+              className={cn(
+                'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition',
+                isActive(path, n.href) ? 'bg-wood-700 text-white' : 'text-wood-800 hover:bg-wood-100',
+              )}
+            >
+              {n.icon}
+              {n.label}
+            </Link>
+          ))}
+        </nav>
+        <div className="border-t border-wood-100 p-3">
+          <div className="mb-2 px-1">
+            <p className="truncate text-sm font-semibold text-wood-900">{user?.name}</p>
+            <p className="truncate text-xs text-wood-600">
+              {user?.role === 'owner' ? 'Owner' : 'Karigar'} · {user?.email}
+            </p>
+          </div>
+          <Button variant="ghost" size="sm" className="w-full justify-start" icon={<LogOut className="h-4 w-4" />} onClick={logout}>
+            Logout
+          </Button>
+        </div>
+      </aside>
+
+      {/* Top bar */}
+      <header className="sticky top-0 z-20 border-b border-wood-100 bg-cream-100/90 backdrop-blur">
+        {!online && (
+          <div className="flex items-center justify-center gap-2 bg-amber-100 px-3 py-1 text-xs font-medium text-amber-900">
+            <WifiOff className="h-3.5 w-3.5" /> Offline - purana data dikh raha hai, changes internet aane par sync honge
+          </div>
+        )}
+        <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-4">
+          <div className="lg:hidden">
+            <Logo compact={isOwner} />
+          </div>
+          {isOwner ? (
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              className="flex h-10 flex-1 items-center gap-2 rounded-xl border border-wood-200 bg-white px-3 text-left text-sm text-wood-400 hover:border-wood-300 lg:max-w-md"
+            >
+              <Search className="h-4 w-4" />
+              <span className="truncate">Grahak, phone ya order no. dhoondein...</span>
+              <kbd className="ml-auto hidden rounded border border-wood-200 px-1.5 text-[10px] text-wood-500 sm:inline">Ctrl K</kbd>
+            </button>
+          ) : (
+            <div className="flex-1" />
+          )}
+          {isOwner && (
+            <LinkButton href="/orders/new" size="md" className="hidden sm:inline-flex lg:hidden" icon={<Plus className="h-4 w-4" />}>
+              Naya Order
+            </LinkButton>
+          )}
+          {isKarigar && (
+            <Button variant="ghost" size="sm" icon={<LogOut className="h-4 w-4" />} onClick={logout} className="lg:hidden">
+              Logout
+            </Button>
+          )}
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-6xl px-4 pb-28 pt-4 lg:pb-10">{children}</main>
+
+      {/* Mobile bottom nav (owner) */}
+      {isOwner && (
+        <nav className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-wood-100 bg-cream-50/95 backdrop-blur lg:hidden">
+          <div className="mx-auto grid max-w-lg grid-cols-5 items-end px-2">
+            {mobileMain.slice(0, 2).map((n) => (
+              <MobileTab key={n.href} item={n} active={isActive(path, n.href)} />
+            ))}
+            <div className="flex justify-center">
+              <Link
+                href="/orders/new"
+                className="-mt-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-wood-700 text-white shadow-lg shadow-wood-900/30"
+                aria-label="Naya Order"
+              >
+                <Plus className="h-7 w-7" />
+              </Link>
+            </div>
+            {mobileMain.slice(2, 3).map((n) => (
+              <MobileTab key={n.href} item={n} active={isActive(path, n.href)} />
+            ))}
+            <button
+              type="button"
+              onClick={() => setMore(true)}
+              className={cn(
+                'flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium',
+                mobileMore.some((m) => isActive(path, m.href)) || path === '/delivery' ? 'text-wood-800' : 'text-wood-500',
+              )}
+            >
+              <Ellipsis className="h-5 w-5" />
+              More
+            </button>
+          </div>
+        </nav>
+      )}
+
+      {/* Mobile "More" sheet */}
+      {more && (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <div className="absolute inset-0 bg-wood-950/40" onClick={() => setMore(false)} />
+          <div className="pb-safe absolute inset-x-0 bottom-0 rounded-t-3xl bg-cream-50 p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="font-semibold text-wood-950">Menu</p>
+              <button onClick={() => setMore(false)} className="rounded-lg p-1.5 hover:bg-wood-100" aria-label="Close">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {[...OWNER_NAV.filter((n) => n.href === '/delivery'), ...mobileMore].map((n) => (
+                <Link
+                  key={n.href}
+                  href={n.href}
+                  className={cn(
+                    'flex flex-col items-center gap-1.5 rounded-2xl p-3 text-center text-xs font-medium',
+                    isActive(path, n.href) ? 'bg-wood-700 text-white' : 'bg-white text-wood-800',
+                  )}
+                >
+                  {n.icon}
+                  {n.label}
+                </Link>
+              ))}
+            </div>
+            <div className="mt-4 flex items-center justify-between rounded-2xl bg-white p-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">{user?.name}</p>
+                <p className="truncate text-xs text-wood-600">{user?.email}</p>
+              </div>
+              <Button variant="outline" size="sm" icon={<LogOut className="h-4 w-4" />} onClick={logout}>
+                Logout
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isOwner && <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />}
+    </div>
+  );
+}
+
+function MobileTab({ item, active }: { item: NavItem; active: boolean }) {
+  return (
+    <Link
+      href={item.href}
+      className={cn('flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium', active ? 'text-wood-800' : 'text-wood-500')}
+    >
+      <span className={cn('rounded-lg px-3 py-0.5', active && 'bg-wood-100')}>{item.icon}</span>
+      <span className="max-w-full truncate">{item.label === 'Kaam kahan tak' ? 'Kaam' : item.label}</span>
+    </Link>
+  );
+}

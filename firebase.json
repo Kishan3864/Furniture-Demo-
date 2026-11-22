@@ -1,0 +1,57 @@
+{
+  "auth": {
+    "providers": {
+      "emailPassword": true
+    }
+  },
+  "firestore": {
+    "database": "(default)",
+    "location": "asia-south1",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "hosting": {
+    "public": "out",
+    "cleanUrls": true,
+    "trailingSlash": false,
+    "ignore": ["firebase.json", "**/.*"],
+    "headers": [
+      {
+        "source": "/sw.js",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+          { "key": "Service-Worker-Allowed", "value": "/" }
+        ]
+      },
+      {
+        "source": "/_next/static/**",
+        "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      },
+      {
+        "source": "**/*.@(html|txt)",
+        "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+      }
+    ],
+    "rewrites": [
+      { "source": "/orders/*/edit.txt", "destination": "/orders/_/edit.txt" },
+      { "source": "/orders/*/edit", "destination": "/orders/_/edit.html" },
+      { "source": "/orders/*.txt", "destination": "/orders/_.txt" },
+      { "source": "/orders/*", "destination": "/orders/_.html" },
+      { "source": "/customers/*.txt", "destination": "/customers/_.txt" },
+      { "source": "/customers/*", "destination": "/customers/_.html" },
+      { "source": "/karigar/*.txt", "destination": "/karigar/_.txt" },
+      { "source": "/karigar/*", "destination": "/karigar/_.html" },
+      { "source": "/jobs/*.txt", "destination": "/jobs/_.txt" },
+      { "source": "/jobs/*", "destination": "/jobs/_.html" },
+      { "source": "/print/bill/*.txt", "destination": "/print/bill/_.txt" },
+      { "source": "/print/bill/*", "destination": "/print/bill/_.html" },
+      { "source": "/print/receipt/*.txt", "destination": "/print/receipt/_.txt" },
+      { "source": "/print/receipt/*", "destination": "/print/receipt/_.html" },
+      { "source": "/status/*.txt", "destination": "/status/_.txt" },
+      { "source": "/status/*", "destination": "/status/_.html" }
+    ]
+  }
+}
