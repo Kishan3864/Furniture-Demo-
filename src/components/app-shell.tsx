@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   Boxes,
   ChartColumn,
+  CircleHelp,
   ClipboardList,
   Ellipsis,
   Hammer,
@@ -116,7 +117,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   }, [ready, fbUser, router]);
 
   useEffect(() => {
-    if (isKarigar && !path.startsWith('/jobs')) router.replace('/jobs');
+    if (isKarigar && !path.startsWith('/jobs') && !path.startsWith('/help')) router.replace('/jobs');
   }, [isKarigar, path, router]);
 
   useEffect(() => {
@@ -155,7 +156,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
         </div>
       </div>
     );
-  if (isKarigar && !path.startsWith('/jobs')) return <PageLoader />;
+  if (isKarigar && !path.startsWith('/jobs') && !path.startsWith('/help')) return <PageLoader />;
 
   return (
     <div className="min-h-screen lg:pl-64">
@@ -187,6 +188,16 @@ export default function AppShell({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <div className="space-y-0.5 border-t border-wood-100 px-3 py-2">
+          <Link
+            href="/help"
+            className={cn(
+              'flex h-9 items-center gap-3 whitespace-nowrap rounded-xl px-3 text-sm font-medium',
+              isActive(path, '/help') ? 'bg-wood-700 text-white' : 'text-wood-800 hover:bg-wood-100',
+            )}
+          >
+            <CircleHelp className="h-4 w-4" />
+            {t('How to use')}
+          </Link>
           <InstallButton
             variant="ghost"
             className="h-9 w-full justify-start gap-3 whitespace-nowrap px-3 font-medium text-wood-800"
@@ -251,6 +262,9 @@ export default function AppShell({ children }: { children: ReactNode }) {
           )}
           {isKarigar && (
             <>
+              <Link href="/help" className="rounded p-2 text-wood-700 hover:bg-wood-100 lg:hidden" aria-label={t('How to use')}>
+                <CircleHelp className="h-4 w-4" />
+              </Link>
               <TourButton iconOnly className="lg:hidden" />
               <LanguageSwitch className="lg:hidden" showIcon={false} />
               <Button variant="ghost" size="sm" icon={<LogOut className="h-4 w-4" />} onClick={logout} className="lg:hidden">
@@ -340,7 +354,13 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 {t('Sign out')}
               </Button>
             </div>
-            <div className="mt-3 grid grid-cols-2 gap-2">
+            <Link
+              href="/help"
+              className="mt-3 flex h-10 items-center justify-center gap-2 rounded-xl border border-wood-200 bg-white text-sm font-semibold text-wood-800"
+            >
+              <CircleHelp className="h-4 w-4" /> {t('How to use')}
+            </Link>
+            <div className="mt-2 grid grid-cols-2 gap-2">
               <InstallButton size="md" className="w-full whitespace-nowrap" />
               <TourButton variant="outline" size="md" className="w-full whitespace-nowrap" />
             </div>

@@ -107,9 +107,10 @@ function MediaViewer({
   return (
     <div className="fixed inset-0 z-[60] flex flex-col bg-black/95">
       <div className="flex items-center justify-between gap-2 p-3 pt-[max(0.75rem,env(safe-area-inset-top))] text-white">
-        <span className="text-xs text-white/70">
+        <span className="min-w-0 text-xs text-white/70">
           {index + 1} / {items.length} · {fmtDateTime(m.at)}
           {m.size ? ` · ${fmtBytes(m.size)}` : ''}
+          {m.caption && <span className="block truncate text-[11px] text-white/50">{m.caption}</span>}
         </span>
         <button onClick={onClose} className="rounded bg-white/15 p-2" aria-label={t('Close')}>
           <X className="h-5 w-5" />
