@@ -104,7 +104,7 @@ export default function StatusPage() {
               <p className="font-semibold text-wood-950">{fmtDate(data.deliveryDate, 'EEEE, dd MMM yyyy')}</p>
             </div>
             {!delivered && d !== null && d >= 0 && (
-              <span className="rounded-full bg-wood-700 px-3 py-1 text-xs font-bold text-white">{d === 0 ? t('Today') : t('{n} DAYS', { n: d })}</span>
+              <span className="rounded bg-wood-700 px-3 py-1 text-xs font-bold text-white">{d === 0 ? t('Today') : t('{n} DAYS', { n: d })}</span>
             )}
           </div>
         </section>
@@ -127,7 +127,7 @@ export default function StatusPage() {
                   </span>
                   <p className={cn('text-sm', current ? 'font-bold text-wood-950' : done ? 'text-wood-800' : 'text-wood-400')}>
                     {t(s.name)}
-                    {current && <span className="ml-2 rounded-full bg-wood-100 px-2 py-0.5 text-[10px] font-semibold text-wood-800">{t('NOW')}</span>}
+                    {current && <span className="ml-2 rounded bg-wood-100 px-2 py-0.5 text-[10px] font-semibold text-wood-800">{t('NOW')}</span>}
                   </p>
                 </li>
               );

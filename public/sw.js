@@ -1,26 +1,60 @@
-/* WoodBook service worker - app shell + image cache for offline-friendly use.
-   Firestore data itself is cached by the Firestore SDK (IndexedDB persistence). */
-const VERSION = 'wb-v1';
-const SHELL = `${VERSION}-shell`;
-const STATIC = `${VERSION}-static`;
-const IMAGES = `${VERSION}-images`;
-const PRECACHE = ['/', '/login', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png'];
+/* WoodBook service worker.
+ * - Precaches the whole app (pages + JS/CSS) listed in /precache-manifest.json (generated at build)
+ *   so the installed app opens instantly and works offline.
+ * - Firestore data is cached separately by the Firestore SDK (IndexedDB).
+ * - __BUILD_ID__ is replaced at build time, so every deploy installs a fresh worker.
+ */
+const VERSION = 'wb-__BUILD_ID__';
+const APP = `${VERSION}-app`;
+const RUNTIME = `${VERSION}-runtime`;
+const IMAGES = 'wb-images-v1';
+
+// Dynamic routes are exported once as "_" placeholders (see firebase.json rewrites)
+const DYNAMIC = [
+  [/^\/orders\/[^/]+\/edit(\.txt)?$/, '/orders/_/edit'],
+  [/^\/(orders|customers|karigar|jobs|status)\/(?!new(\.txt)?$)[^/]+?(\.txt)?$/, (m) => `/${m[1]}/_`],
+  [/^\/print\/(bill|receipt)\/[^/]+?(\.txt)?$/, (m) => `/print/${m[1]}/_`],
+];
+
+function placeholderFor(pathname) {
+  const isTxt = pathname.endsWith('.txt');
+  for (const [re, to] of DYNAMIC) {
+    const m = pathname.match(re);
+    if (m) {
+      const base = typeof to === 'function' ? to(m) : to;
+      return isTxt ? `${base}.txt` : base;
+    }
+  }
+  return null;
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches
-      .open(SHELL)
-      .then((c) => Promise.allSettled(PRECACHE.map((u) => c.add(u))))
-      .then(() => self.skipWaiting()),
+    (async () => {
+      const cache = await caches.open(APP);
+      let urls = ['/', '/login', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png'];
+      try {
+        const res = await fetch('/precache-manifest.json', { cache: 'no-store' });
+        if (res.ok) urls = (await res.json()).urls || urls;
+      } catch {
+        /* offline during install - keep the minimal list */
+      }
+      // add in small batches; a single failure must not break install
+      for (let i = 0; i < urls.length; i += 12) {
+        await Promise.allSettled(urls.slice(i, i + 12).map((u) => cache.add(new Request(u, { cache: 'reload' }))));
+      }
+      await self.skipWaiting();
+    })(),
   );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then((keys) => Promise.all(keys.filter((k) => !k.startsWith(VERSION)).map((k) => caches.delete(k))))
-      .then(() => self.clients.claim()),
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys.filter((k) => k.startsWith('wb-') && !k.startsWith(VERSION) && k !== IMAGES).map((k) => caches.delete(k)));
+      await self.clients.claim();
+    })(),
   );
 });
 
@@ -28,12 +62,19 @@ function isImageHost(url) {
   return url.hostname === 'firebasestorage.googleapis.com' || url.hostname.endsWith('.firebasestorage.app');
 }
 
+async function fromCache(pathname) {
+  return (
+    (await caches.match(pathname, { ignoreSearch: true })) ||
+    (placeholderFor(pathname) ? await caches.match(placeholderFor(pathname), { ignoreSearch: true }) : undefined)
+  );
+}
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
 
-  // Firebase Storage images: stale-while-revalidate
+  // Cloud Storage images: stale-while-revalidate
   if (isImageHost(url)) {
     event.respondWith(
       caches.open(IMAGES).then(async (cache) => {
@@ -51,46 +92,43 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (url.origin !== self.location.origin) return;
+  if (url.pathname === '/sw.js' || url.pathname === '/precache-manifest.json') return;
 
-  // Hashed build assets: cache first
+  // Hashed build assets + icons: cache first
   if (url.pathname.startsWith('/_next/static/') || /\.(png|svg|ico|webmanifest|woff2?)$/.test(url.pathname)) {
     event.respondWith(
-      caches.open(STATIC).then(async (cache) => {
-        const cached = await cache.match(req);
+      (async () => {
+        const cached = await caches.match(req, { ignoreSearch: true });
         if (cached) return cached;
         const res = await fetch(req);
-        if (res.ok) cache.put(req, res.clone());
+        if (res.ok) (await caches.open(RUNTIME)).put(req, res.clone());
         return res;
-      }),
+      })(),
     );
     return;
   }
 
-  // Page navigations: network first, fall back to cache (then app root)
-  if (req.mode === 'navigate') {
-    event.respondWith(
-      fetch(req)
-        .then((res) => {
-          const copy = res.clone();
-          caches.open(SHELL).then((c) => c.put(req, copy));
-          return res;
-        })
-        .catch(async () => (await caches.match(req)) || (await caches.match('/')) || Response.error()),
-    );
-    return;
-  }
-
-  // RSC / other same-origin GETs: network first with cache fallback
-  if (url.pathname.startsWith('/api/')) return;
+  // Pages (HTML) and page data (.txt): network first with a short timeout, then cache
+  const isPage = req.mode === 'navigate' || url.pathname.endsWith('.txt');
+  if (!isPage) return;
   event.respondWith(
-    fetch(req)
-      .then((res) => {
-        if (res.ok) {
+    (async () => {
+      try {
+        const res = await Promise.race([
+          fetch(req),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000)),
+        ]);
+        if (res && res.ok) {
           const copy = res.clone();
-          caches.open(SHELL).then((c) => c.put(req, copy));
+          caches.open(RUNTIME).then((c) => c.put(url.pathname, copy));
         }
         return res;
-      })
-      .catch(async () => (await caches.match(req)) || Response.error()),
+      } catch {
+        const cached = await fromCache(url.pathname);
+        if (cached) return cached;
+        if (req.mode === 'navigate') return (await caches.match('/', { ignoreSearch: true })) || Response.error();
+        return Response.error();
+      }
+    })(),
   );
 });

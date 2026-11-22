@@ -107,12 +107,14 @@ export default function OrderDetailPage() {
             <LinkButton href={`/orders/${order.id}/edit`} variant="outline" icon={<Pencil className="h-4 w-4" />}>
               {t('Edit')}
             </LinkButton>
-            <LinkButton href={`/print/bill/${order.id}`} variant="outline" icon={<Printer className="h-4 w-4" />}>
-              {t('Bill')}
-            </LinkButton>
-            <LinkButton href={`/print/bill/${order.id}?type=estimate`} variant="outline" icon={<FileText className="h-4 w-4" />}>
-              {t('Estimate')}
-            </LinkButton>
+            <span className="inline-flex gap-2" data-tour="od-print">
+              <LinkButton href={`/print/bill/${order.id}`} variant="outline" icon={<Printer className="h-4 w-4" />}>
+                {t('Bill')}
+              </LinkButton>
+              <LinkButton href={`/print/bill/${order.id}?type=estimate`} variant="outline" icon={<FileText className="h-4 w-4" />}>
+                {t('Estimate')}
+              </LinkButton>
+            </span>
             <Button variant="ghost" size="icon" aria-label={t('Delete order')} onClick={onDelete} loading={deleting}>
               {!deleting && <Trash2 className="h-4 w-4 text-red-600" />}
             </Button>
@@ -178,7 +180,7 @@ export default function OrderDetailPage() {
             </div>
           </Card>
 
-          <Card>
+          <Card tour="od-photos">
             <CardHeader title={t('Progress photos')} />
             <div className="p-4">
               <ProgressPhotos order={order} canDelete />
@@ -190,7 +192,7 @@ export default function OrderDetailPage() {
 
         <div className="space-y-4">
           <div id="stages" className="scroll-mt-20">
-            <Card>
+            <Card tour="od-stages">
               <CardHeader title={t('Work stage')} />
               <div className="p-4">
                 <StageStepper order={order} editable />

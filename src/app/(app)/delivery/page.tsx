@@ -234,7 +234,7 @@ export default function DeliveryPage() {
                 type="button"
                 onClick={() => setFilter(c.value)}
                 className={cn(
-                  'flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition',
+                  'flex shrink-0 items-center gap-1.5 rounded border px-3.5 py-1.5 text-sm font-medium transition',
                   filter === c.value
                     ? c.tone === 'red'
                       ? 'border-red-600 bg-red-600 text-white'
@@ -248,7 +248,7 @@ export default function DeliveryPage() {
                 {c.count !== undefined && (
                   <span
                     className={cn(
-                      'rounded-full px-1.5 text-xs',
+                      'rounded px-1.5 text-xs',
                       filter === c.value ? 'bg-white/25' : 'bg-wood-100 text-wood-700',
                     )}
                   >

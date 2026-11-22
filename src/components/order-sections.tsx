@@ -46,7 +46,7 @@ export function PaymentsSection({ order }: { order: Order }) {
   const total = fin ? fin.price - (fin.discount || 0) : 0;
 
   return (
-    <Card>
+    <Card tour="od-payments">
       <CardHeader
         title={t('Payments')}
         action={

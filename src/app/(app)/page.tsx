@@ -138,7 +138,7 @@ export default function DashboardPage() {
         </Card>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6" data-tour="dash-stats">
             <StatCard label={t("Today's deliveries")} value={stats.today.length} icon={<Truck className="h-5 w-5" />} tone="amber" href="/delivery" />
             <StatCard label={t('This week')} value={stats.week.length} icon={<CalendarDays className="h-5 w-5" />} tone="blue" href="/delivery" sub={t('Next 7 days')} />
             <StatCard

@@ -291,9 +291,21 @@ export function SearchInput({
 
 /* ------------------------------ Layout bits ------------------------------ */
 
-export function Card({ className, children, onClick }: { className?: string; children: ReactNode; onClick?: () => void }) {
+export function Card({
+  className,
+  children,
+  onClick,
+  tour,
+}: {
+  className?: string;
+  children: ReactNode;
+  onClick?: () => void;
+  /** anchor for the guided tour (data-tour) */
+  tour?: string;
+}) {
   return (
     <div
+      data-tour={tour}
       onClick={onClick}
       className={cn(
         'rounded-2xl border border-wood-100 bg-white shadow-soft',
@@ -328,7 +340,7 @@ export function PageHeader({
 }) {
   const router = useRouter();
   return (
-    <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+    <div className="mb-4 flex flex-wrap items-start justify-between gap-3" data-tour="page-header">
       <div className="flex min-w-0 items-start gap-2">
         {back && (
           <button
@@ -345,7 +357,11 @@ export function PageHeader({
           {subtitle && <p className="mt-0.5 text-sm text-wood-600">{subtitle}</p>}
         </div>
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {actions && (
+        <div className="flex flex-wrap items-center gap-2" data-tour="page-actions">
+          {actions}
+        </div>
+      )}
     </div>
   );
 }
@@ -365,7 +381,7 @@ export function Badge({ tone = 'gray', children, className }: { tone?: Tone; chi
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold',
+        'inline-flex items-center gap-1 whitespace-nowrap rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide',
         toneCls[tone],
         className,
       )}

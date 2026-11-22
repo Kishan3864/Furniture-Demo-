@@ -88,7 +88,7 @@ export default function JobDetailPage() {
               )}
             </div>
           </Card>
-          <Card>
+          <Card tour="job-photos">
             <CardHeader title={t('Progress photos')} />
             <div className="p-4">
               <ProgressPhotos order={order} canDelete={false} />
@@ -96,7 +96,7 @@ export default function JobDetailPage() {
           </Card>
         </div>
         <div>
-          <Card>
+          <Card tour="job-stages">
             <CardHeader title={t('Update stage')} />
             <div className="p-4">
               <StageStepper order={order} editable />

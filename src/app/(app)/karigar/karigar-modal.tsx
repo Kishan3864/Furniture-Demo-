@@ -111,8 +111,8 @@ export function KarigarModal({
                 onClick={() => setF({ ...f, skill: s })}
                 className={
                   f.skill === s
-                    ? 'rounded-full bg-wood-700 px-3 py-1 text-xs font-medium text-white'
-                    : 'rounded-full bg-wood-100 px-3 py-1 text-xs font-medium text-wood-800 hover:bg-wood-200'
+                    ? 'rounded bg-wood-700 px-3 py-1 text-xs font-medium text-white'
+                    : 'rounded bg-wood-100 px-3 py-1 text-xs font-medium text-wood-800 hover:bg-wood-200'
                 }
               >
                 {t(s)}

@@ -44,6 +44,8 @@ import {
 import { ListEditor } from '@/components/list-editor';
 import { StoredImg } from '@/components/stored-image';
 import { ChangePasswordCard } from '@/components/change-password';
+import { InstallButton } from '@/components/install-app';
+import { TourButton } from '@/components/tour';
 
 /* ------------------------------ Profile ------------------------------ */
 
@@ -663,6 +665,26 @@ function LanguageSection() {
   );
 }
 
+/* ------------------------------ App (install + tour) ------------------------------ */
+
+function AppSection() {
+  const t = useT();
+  return (
+    <Card>
+      <CardHeader title={t('App')} />
+      <div className="space-y-3 p-4">
+        <p className="text-xs text-wood-600">
+          {t('Install WoodBook on your phone or computer. It opens full screen like a normal app, starts faster and keeps working with weak internet.')}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <InstallButton size="md" variant="primary" />
+          <TourButton size="md" variant="outline" />
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 /* ------------------------------ Page ------------------------------ */
 
 export default function SettingsPage() {
@@ -689,6 +711,7 @@ export default function SettingsPage() {
         </div>
         <div className="space-y-6 lg:col-span-2">
           <LanguageSection />
+          <AppSection />
           <AccountSection />
           <DemoSection />
         </div>

@@ -47,7 +47,7 @@ export function ListEditor({
         {items.map((it, i) => (
           <span
             key={it + i}
-            className="inline-flex items-center gap-0.5 rounded-full border border-wood-200 bg-wood-50 py-1 pl-1 pr-1 text-sm text-wood-900"
+            className="inline-flex items-center gap-0.5 rounded border border-wood-200 bg-wood-50 py-1 pl-1 pr-1 text-sm text-wood-900"
           >
             <button
               type="button"

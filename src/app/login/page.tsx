@@ -14,6 +14,7 @@ import { validate } from '@/lib/schemas';
 import { errMsg } from '@/lib/utils';
 import { Button, Field, Input, PageLoader } from '@/components/ui';
 import { LanguageSwitch } from '@/components/language-switch';
+import { InstallButton } from '@/components/install-app';
 
 const loginSchema = z.object({
   email: z.string().trim().email('Enter a valid email'),
@@ -80,7 +81,8 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-cream-100 to-wood-100">
-      <div className="flex justify-end p-4">
+      <div className="flex items-center justify-end gap-2 p-4 pt-[max(1rem,env(safe-area-inset-top))]">
+        <InstallButton />
         <LanguageSwitch />
       </div>
       <div className="flex flex-1 items-center justify-center px-4 pb-12">

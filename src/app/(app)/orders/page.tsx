@@ -201,7 +201,7 @@ export default function OrdersPage() {
         }
       />
 
-      <div className="mb-4 space-y-3">
+      <div className="mb-4 space-y-3" data-tour="orders-filters">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <SearchInput value={q} onChange={setQ} placeholder={t('Order no, customer, phone, item...')} className="flex-1" />
           <div className="flex items-center gap-2">

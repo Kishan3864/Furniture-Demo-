@@ -28,6 +28,8 @@ import { cn } from '@/lib/utils';
 import { Button, LinkButton, PageLoader } from './ui';
 import { GlobalSearch } from './global-search';
 import { LanguageSwitch } from './language-switch';
+import { InstallBanner, InstallButton } from './install-app';
+import { TourButton } from './tour';
 import { useT } from '@/lib/i18n';
 import { StoredImg } from './stored-image';
 
@@ -161,7 +163,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
           <Logo />
         </div>
         {isOwner && (
-          <div className="px-3 pb-2">
+          <div className="px-3 pb-2" data-tour="new-order">
             <LinkButton href="/orders/new" className="w-full" icon={<Plus className="h-4 w-4" />}>
               {t('New Order')}
             </LinkButton>
@@ -189,6 +191,10 @@ export default function AppShell({ children }: { children: ReactNode }) {
               {user?.role === 'owner' ? t('Admin') : t('Worker')} · {user?.email}
             </p>
           </div>
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            <InstallButton className="flex-1" />
+            <TourButton variant="outline" className="flex-1" />
+          </div>
           <LanguageSwitch className="mb-2 px-1" />
           <Button variant="ghost" size="sm" className="w-full justify-start" icon={<LogOut className="h-4 w-4" />} onClick={logout}>
             {t('Sign out')}
@@ -197,7 +203,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Top bar */}
-      <header className="sticky top-0 z-20 border-b border-wood-100 bg-cream-100/90 backdrop-blur">
+      <header className="sticky top-0 z-20 border-b border-wood-100 bg-cream-100/95 pt-[env(safe-area-inset-top)] backdrop-blur">
         {!online && (
           <div className="flex items-center justify-center gap-2 bg-amber-100 px-3 py-1 text-xs font-medium text-amber-900">
             <WifiOff className="h-3.5 w-3.5" /> {t('You are offline - showing saved data. Changes will sync when internet is back.')}
@@ -211,6 +217,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
+              data-tour="search"
               className="flex h-10 flex-1 items-center gap-2 rounded-xl border border-wood-200 bg-white px-3 text-left text-sm text-wood-400 hover:border-wood-300 lg:max-w-md"
             >
               <Search className="h-4 w-4" />
@@ -220,6 +227,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
           ) : (
             <div className="flex-1" />
           )}
+          <InstallButton iconOnly variant="ghost" className="lg:hidden" />
           {isOwner && (
             <LinkButton href="/orders/new" size="md" className="hidden sm:inline-flex lg:hidden" icon={<Plus className="h-4 w-4" />}>
               {t('New Order')}
@@ -227,6 +235,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
           )}
           {isKarigar && (
             <>
+              <TourButton iconOnly className="lg:hidden" />
               <LanguageSwitch className="lg:hidden" showIcon={false} />
               <Button variant="ghost" size="sm" icon={<LogOut className="h-4 w-4" />} onClick={logout} className="lg:hidden">
                 {t('Sign out')}
@@ -236,7 +245,14 @@ export default function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 pb-28 pt-4 lg:pb-10">{children}</main>
+      <main key={path} className="mx-auto max-w-6xl animate-page px-4 pb-28 pt-4 lg:pb-10">
+        {children}
+      </main>
+
+      {/* Install invitation on phones */}
+      <div className={cn('fixed inset-x-3 z-30 lg:hidden', isOwner ? 'bottom-[88px]' : 'bottom-3')}>
+        <InstallBanner />
+      </div>
 
       {/* Mobile bottom nav (owner) */}
       {isOwner && (
@@ -248,6 +264,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
             <div className="flex justify-center">
               <Link
                 href="/orders/new"
+                data-tour="new-order"
                 className="-mt-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-wood-700 text-white shadow-lg shadow-wood-900/30"
                 aria-label={t('New Order')}
               >
@@ -306,6 +323,10 @@ export default function AppShell({ children }: { children: ReactNode }) {
               <Button variant="outline" size="sm" icon={<LogOut className="h-4 w-4" />} onClick={logout}>
                 {t('Sign out')}
               </Button>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <InstallButton size="md" className="w-full" />
+              <TourButton variant="outline" size="md" className="w-full" />
             </div>
             <div className="mt-3 flex justify-center">
               <LanguageSwitch />

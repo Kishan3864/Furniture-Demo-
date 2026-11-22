@@ -168,7 +168,7 @@ export default function ExpensesPage() {
               type="button"
               onClick={() => setCat('')}
               className={cn(
-                'rounded-full px-3 py-1 text-xs font-medium',
+                'rounded px-3 py-1 text-xs font-medium',
                 !cat ? 'bg-wood-700 text-white' : 'bg-wood-100 text-wood-800 hover:bg-wood-200',
               )}
             >
@@ -180,7 +180,7 @@ export default function ExpensesPage() {
                 type="button"
                 onClick={() => setCat(cat === c ? '' : c)}
                 className={cn(
-                  'rounded-full px-3 py-1 text-xs font-medium',
+                  'rounded px-3 py-1 text-xs font-medium',
                   cat === c ? 'bg-wood-700 text-white' : 'bg-wood-100 text-wood-800 hover:bg-wood-200',
                 )}
               >

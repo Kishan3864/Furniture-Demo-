@@ -93,9 +93,9 @@ function initState(woodTypes: string[], order?: Order, customerId?: string, pric
   };
 }
 
-function Section({ title, children, action }: { title: ReactNode; children: ReactNode; action?: ReactNode }) {
+function Section({ title, children, action, tour }: { title: ReactNode; children: ReactNode; action?: ReactNode; tour?: string }) {
   return (
-    <Card>
+    <Card tour={tour}>
       <CardHeader title={title} action={action} />
       <div className="space-y-3 p-4">{children}</div>
     </Card>
@@ -395,11 +395,11 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
     <form id="order-form" onSubmit={submit} className="space-y-4" noValidate>
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
-          <Section title={t('Customer')}>
+          <Section title={t('Customer')} tour="of-customer">
             <CustomerPicker value={f.customerId} onChange={(id) => set('customerId', id)} error={errors.customerId} />
           </Section>
 
-          <Section title={t('Item')}>
+          <Section title={t('Item')} tour="of-item">
             <Field label={t('Item type')} required error={errors.itemType}>
               <div className="flex flex-wrap gap-2">
                 {itemTypes.map((it) => (
@@ -427,6 +427,7 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
           </Section>
 
           <Section
+            tour="of-naap"
             title={t('Measurements')}
             action={
               <Segmented
@@ -508,7 +509,7 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
             </Field>
           </Section>
 
-          <Section title={t('Design')}>
+          <Section title={t('Design')} tour="of-photos">
             <PhotoGrid
               photos={existingPhotos}
               onRemove={(i) => {
@@ -535,7 +536,7 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
             </Field>
           </Section>
 
-          <Section title={t('Wood / Material')}>
+          <Section title={t('Wood / Material')} tour="of-material">
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label={t('Wood type')} error={errors.wood}>
                 <Select
@@ -561,7 +562,7 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
         </div>
 
         <div className="space-y-4">
-          <Section title={t('Payment')}>
+          <Section title={t('Payment')} tour="of-price">
             <div className="grid grid-cols-2 gap-3">
               <Field label={t('Price (₹)')} required error={errors.price} className="col-span-2">
                 <Input
@@ -626,7 +627,7 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
             {isEdit && <p className="text-xs text-wood-600">{t('Add new payments from the order page using "Receive payment".')}</p>}
           </Section>
 
-          <Section title={t('Dates & Priority')}>
+          <Section title={t('Dates & Priority')} tour="of-dates">
             <div className="grid grid-cols-2 gap-3">
               <Field label={t('Order date')} required error={errors.orderDate}>
                 <Input type="date" value={f.orderDate} onChange={(e) => set('orderDate', e.target.value)} invalid={!!errors.orderDate} />
@@ -656,7 +657,7 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
             </Field>
           </Section>
 
-          <Section title={t('Workers')}>
+          <Section title={t('Workers')} tour="of-workers">
             {karigarOptions.length ? (
               <div className="flex flex-wrap gap-2">
                 {karigarOptions.map((k) => {
@@ -705,7 +706,7 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
             <Button variant="outline" onClick={() => router.back()} disabled={saving}>
               {t('Cancel')}
             </Button>
-            <Button type="submit" loading={saving}>
+            <Button type="submit" loading={saving} data-tour="of-save">
               {isEdit ? t('Update order') : t('Save order')}
             </Button>
           </div>

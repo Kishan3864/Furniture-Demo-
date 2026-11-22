@@ -59,7 +59,7 @@ export default function JobsPage() {
         ]}
       />
       {list.length ? (
-        <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3" data-tour="jobs-list">
           {list.map((o) => (
             <OrderCard key={o.id} order={o} href={`/jobs/${o.id}`} showKarigar={false} />
           ))}
