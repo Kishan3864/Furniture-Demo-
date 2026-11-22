@@ -95,7 +95,7 @@ npm run deploy:all    # build + deploy auth providers, Firestore rules/indexes, 
 
 ## Guided tour
 
-New users are offered a guided tour after their first sign in. The admin tour has 28 steps covering dashboard, customers, the new-order form step by step, order detail (stages, photos, WhatsApp, payments, bill), work progress board, deliveries, payments, workers, stock, expenses, reports, settings and install. Workers get a shorter tour of their own.
+New users are offered a guided tour after their first sign in. The admin tour has 29 steps covering dashboard, customers, the new-order form step by step, order detail (stages, photos, WhatsApp, payments, bill), work progress board, deliveries, payments, workers, stock, expenses, reports, settings and install. Workers get a shorter tour of their own.
 
 - **Restarting the tour:** use **Take a tour** in the sidebar, the mobile menu or Settings → App.
 - **Editing the steps:** steps live in `src/lib/tour-steps.ts` and point at `data-tour="..."` anchors. Hinglish translations are in `src/i18n/hi-tour.ts`.
