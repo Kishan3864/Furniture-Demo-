@@ -19,12 +19,14 @@ import {
 import { createLoginForStaff, db } from './firebase';
 import { tr } from './i18n';
 import { deleteImage } from './upload';
+import { deleteMedia } from './media';
 import { orderNo as fmtOrderNo, randomToken, receiptNo as fmtReceiptNo, todayStr } from './utils';
 import type {
   Customer,
   Finance,
   Karigar,
   Labour,
+  Media,
   Order,
   Payment,
   PayMode,
@@ -155,6 +157,9 @@ export interface CreateOrderExtra {
   advance: number;
   advanceMode: PayMode;
   createdBy?: string;
+  /** when created from a site visit */
+  siteId?: string | null;
+  siteMedia?: Media[];
 }
 
 export async function createOrder(input: OrderInput, settings: WorkshopSettings, extra: CreateOrderExtra) {
@@ -186,6 +191,8 @@ export async function createOrder(input: OrderInput, settings: WorkshopSettings,
       naap: { ...input.naap, notes: input.naap.notes || '' },
       designPhotos: extra.designPhotos,
       progressPhotos: [],
+      siteMedia: extra.siteMedia || [],
+      siteId: extra.siteId || null,
       refLink: input.refLink || '',
       wood: input.wood || '',
       finish: input.finish || '',
@@ -597,4 +604,17 @@ export async function saveExpense(input: ExpenseInput, id?: string) {
 
 export async function hardDelete(col: string, id: string) {
   await deleteDoc(doc(db(), col, id));
+}
+
+/* ------------------------------ Order site photos / videos ------------------------------ */
+
+/** Owner or assigned worker (rules allow 'siteMedia' for workers). */
+export async function addOrderSiteMedia(order: Order, items: Media[]) {
+  await updateDoc(doc(db(), 'orders', order.id), { siteMedia: arrayUnion(...items), updatedAt: now() });
+}
+
+export async function removeOrderSiteMedia(order: Order, m: Media) {
+  await updateDoc(doc(db(), 'orders', order.id), { siteMedia: arrayRemove(m), updatedAt: now() });
+  // files copied from a site visit belong to the site - keep them
+  if (m.source !== 'site') await deleteMedia(m);
 }

@@ -65,6 +65,50 @@ export interface Photo {
   caption?: string;
 }
 
+export type MediaKind = 'photo' | 'video';
+
+/** Photo or video. Videos keep a small poster image for previews. */
+export interface Media extends Photo {
+  kind: MediaKind;
+  mime?: string;
+  size?: number;
+  /** poster image url (photos stored like other images) */
+  poster?: string;
+  /** seconds */
+  duration?: number;
+  /** 'site' = copied from a site visit (file belongs to the site, never delete from the order) */
+  source?: 'site' | 'order';
+}
+
+/** One measured item / room at a site */
+export interface SiteEntry {
+  id: string;
+  label: string;
+  unit: LengthUnit;
+  l: number | null;
+  w: number | null;
+  h: number | null;
+  notes?: string;
+}
+
+/** Site visit: sizes + site photos/videos recorded at the customer's place (owner only). */
+export interface Site {
+  id: string;
+  customerId: string;
+  customerName: string;
+  customerPhone: string;
+  address?: string;
+  title: string;
+  visitDate: string; // yyyy-MM-dd
+  entries: SiteEntry[];
+  media: Media[];
+  notes?: string;
+  orderIds: string[];
+  deleted: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface StageEvent {
   stage: string;
   index: number;
@@ -86,6 +130,10 @@ export interface Order {
   naap: Naap;
   designPhotos: Photo[];
   progressPhotos: Photo[];
+  /** site photos + videos (also visible to assigned workers) */
+  siteMedia?: Media[];
+  /** site visit this order was created from */
+  siteId?: string | null;
   refLink?: string;
   wood?: string;
   finish?: string;

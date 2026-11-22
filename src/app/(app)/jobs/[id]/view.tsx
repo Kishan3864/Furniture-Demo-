@@ -20,6 +20,7 @@ import {
   PriorityBadge,
 } from '@/components/ui';
 import { JobSpecs, ProgressPhotos, StageBadge, StageStepper, isDelivered } from '@/components/order-bits';
+import { OrderSiteMediaCard } from '@/components/order-site-media';
 
 /** Karigar job view - deliberately shows no prices or payments. */
 export default function JobDetailPage() {
@@ -88,6 +89,7 @@ export default function JobDetailPage() {
               )}
             </div>
           </Card>
+          <OrderSiteMediaCard order={order} canDelete={false} />
           <Card tour="job-photos">
             <CardHeader title={t('Progress photos')} />
             <div className="p-4">

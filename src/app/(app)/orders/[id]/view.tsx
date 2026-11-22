@@ -27,6 +27,7 @@ import {
 } from '@/components/ui';
 import { JobSpecs, ProgressPhotos, StageBadge, StageStepper, isDelivered } from '@/components/order-bits';
 import { LabourSection, MaterialSection, PaymentsSection, StatusSection } from '@/components/order-sections';
+import { OrderSiteMediaCard } from '@/components/order-site-media';
 
 export default function OrderDetailPage() {
   const t = useT();
@@ -180,6 +181,7 @@ export default function OrderDetailPage() {
             </div>
           </Card>
 
+          <OrderSiteMediaCard order={order} canDelete />
           <Card tour="od-photos">
             <CardHeader title={t('Progress photos')} />
             <div className="p-4">

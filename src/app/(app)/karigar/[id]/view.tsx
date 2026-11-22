@@ -14,7 +14,7 @@ import { useT } from '@/lib/i18n';
 import { createKarigarLogin, deleteKarigar, payLabour, saveLabour, setKarigarLoginActive, softDelete } from '@/lib/actions';
 import { karigarLoginSchema, labourSchema, validate } from '@/lib/schemas';
 import type { Karigar, Labour } from '@/lib/types';
-import { errMsg, fmtDate, money, waLink } from '@/lib/utils';
+import { appUrl, errMsg, fmtDate, money, waLink } from '@/lib/utils';
 import {
   Badge,
   Button,
@@ -346,7 +346,7 @@ function LoginSection({ karigar }: { karigar: Karigar }) {
     }
   };
 
-  const loginUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/login`;
+  const loginUrl = `${appUrl()}/login?as=worker`;
 
   return (
     <Card>

@@ -54,6 +54,13 @@ export const OWNER_TOUR: TourStep[] = [
     body: 'Add a customer with name, phone and address. Each customer keeps their full order history, total paid and balance due.\nTip: you can also add a new customer directly while creating an order.',
   },
   {
+    id: 'sites',
+    route: '/sites',
+    target: 'page-actions',
+    title: 'Site visits – sizes, photos & videos',
+    body: 'At the customer’s site, save all sizes room by room, take site photos and record videos. Later, turn any measurement into an order in one tap – the photos and videos go with it.',
+  },
+  {
     id: 'of-customer',
     route: '/orders/new',
     target: 'of-customer',
@@ -239,6 +246,13 @@ export const WORKER_TOUR: TourStep[] = [
     target: 'job-stages',
     title: 'Update the stage',
     body: 'When you finish a step, tap the next stage. The owner sees it immediately.',
+  },
+  {
+    id: 'w-site',
+    route: jobDetail,
+    target: 'order-site-media',
+    title: 'Site photos & videos',
+    body: 'See the photos and videos from the customer’s site. You can also add new site photos or record a video.',
   },
   {
     id: 'w-photos',

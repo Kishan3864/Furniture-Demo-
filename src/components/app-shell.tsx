@@ -13,6 +13,7 @@ import {
   LogOut,
   Plus,
   Receipt,
+  Ruler,
   Search,
   Settings,
   Truck,
@@ -42,6 +43,7 @@ interface NavItem {
 const OWNER_NAV: NavItem[] = [
   { href: '/', label: 'Dashboard', icon: <House className="h-5 w-5" /> },
   { href: '/orders', label: 'Orders', icon: <ClipboardList className="h-5 w-5" /> },
+  { href: '/sites', label: 'Site Visits', icon: <Ruler className="h-5 w-5" /> },
   { href: '/board', label: 'Work Progress', icon: <Hammer className="h-5 w-5" /> },
   { href: '/delivery', label: 'Deliveries', icon: <Truck className="h-5 w-5" /> },
   { href: '/customers', label: 'Customers', icon: <Users className="h-5 w-5" /> },
@@ -184,21 +186,35 @@ export default function AppShell({ children }: { children: ReactNode }) {
             </Link>
           ))}
         </nav>
+        <div className="space-y-0.5 border-t border-wood-100 px-3 py-2">
+          <InstallButton
+            variant="ghost"
+            className="h-9 w-full justify-start gap-3 whitespace-nowrap px-3 font-medium text-wood-800"
+          />
+          <TourButton variant="ghost" className="h-9 w-full justify-start gap-3 whitespace-nowrap px-3 font-medium text-wood-800" />
+        </div>
         <div className="border-t border-wood-100 p-3">
-          <div className="mb-2 px-1">
-            <p className="truncate text-sm font-semibold text-wood-900">{user?.name}</p>
-            <p className="truncate text-xs text-wood-600">
-              {user?.role === 'owner' ? t('Admin') : t('Worker')} · {user?.email}
-            </p>
+          <div className="flex items-center gap-2.5 px-1">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-wood-700 text-xs font-bold uppercase text-white">
+              {(user?.name || '?').slice(0, 1)}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold leading-tight text-wood-900">{user?.name}</p>
+              <p className="truncate text-[11px] leading-tight text-wood-600">
+                {user?.role === 'owner' ? t('Admin') : t('Worker')} · {user?.email}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={logout}
+              className="shrink-0 rounded p-1.5 text-wood-600 hover:bg-wood-100 hover:text-wood-900"
+              aria-label={t('Sign out')}
+              title={t('Sign out')}
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
           </div>
-          <div className="mb-2 flex flex-wrap gap-1.5">
-            <InstallButton className="flex-1" />
-            <TourButton variant="outline" className="flex-1" />
-          </div>
-          <LanguageSwitch className="mb-2 px-1" />
-          <Button variant="ghost" size="sm" className="w-full justify-start" icon={<LogOut className="h-4 w-4" />} onClick={logout}>
-            {t('Sign out')}
-          </Button>
+          <LanguageSwitch className="mt-2.5 px-1" />
         </div>
       </aside>
 
@@ -325,8 +341,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
               </Button>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <InstallButton size="md" className="w-full" />
-              <TourButton variant="outline" size="md" className="w-full" />
+              <InstallButton size="md" className="w-full whitespace-nowrap" />
+              <TourButton variant="outline" size="md" className="w-full whitespace-nowrap" />
             </div>
             <div className="mt-3 flex justify-center">
               <LanguageSwitch />

@@ -61,6 +61,7 @@ You can also sign in on a fresh project with **Set up admin account**. That link
 - **Worker login:** Admin → Workers → open a worker → **Create login** (email and password). Give those details to the worker.
   - A worker sees only the jobs assigned to them, and can change the stage and upload progress photos.
   - A worker never sees prices, payments or customers. Firestore rules enforce this, because money data lives in the admin-only `finance` and `payments` collections.
+- **Separate sign-in pages:** the login page has an **Admin login** tab and a **Worker login** tab. Share the worker link `/login?as=worker` with workers. Signing in on the wrong tab is refused and the user is told which tab to use.
 - **Changing a password:** Settings → **Change password**.
 
 ## 4. Demo data
@@ -81,7 +82,9 @@ npm run deploy:all    # build + deploy auth providers, Firestore rules/indexes, 
 
 **Dynamic routes:** each dynamic route (`/orders/[id]`, `/status/[token]` and the others) is exported once as a placeholder page `_`. The `rewrites` in `firebase.json` send every real id to that placeholder, and the page reads the id from the URL through `useRouteParam()`.
 
-### Photos
+### Photos and videos
+
+- **Videos** (site visits and orders) go to Cloud Storage when `NEXT_PUBLIC_PHOTO_STORE=storage`. Otherwise they are split into binary chunks of about 950 KB in the Firestore collection `media/{id}/chunks` (free plan, up to 60 MB per video). A poster frame is saved for each video so lists load quickly.
 
 - **Default (free plan):** photos are compressed in the browser and stored in the Firestore `images` collection.
 - **Switching to Cloud Storage:** Storage on new projects needs the Blaze plan. Once Storage is enabled (Console → Storage → Get started), set `NEXT_PUBLIC_PHOTO_STORE=storage`, run `firebase deploy --only storage`, then `npm run deploy`. Photos already uploaded keep working.
@@ -106,6 +109,7 @@ New users are offered a guided tour after their first sign in. The admin tour ha
 |---|---|
 | Dashboard (today/week deliveries, overdue, in progress, ready, pending payments) | `/` |
 | Orders (measurements ft/inch, design photos, wood/material, price/advance/balance, stages, workers) | `/orders` |
+| Site Visits (sizes room by room, site photos + videos, create order from a size) | `/sites` |
 | Work Progress (board by stage / worker) | `/board` |
 | Deliveries (countdown list + calendar) | `/delivery` |
 | Customers (history, paid/due) | `/customers` |

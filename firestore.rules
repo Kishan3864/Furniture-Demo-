@@ -52,7 +52,7 @@ service cloud.firestore {
       allow create, delete: if isOwner();
       allow update: if isOwner() || (
         karigarAssigned(resource.data)
-        && onlyChanges(['stage', 'stageIndex', 'progress', 'stageHistory', 'progressPhotos', 'updatedAt', 'deliveredAt'])
+        && onlyChanges(['stage', 'stageIndex', 'progress', 'stageHistory', 'progressPhotos', 'siteMedia', 'updatedAt', 'deliveredAt'])
       );
     }
 
@@ -78,6 +78,28 @@ service cloud.firestore {
       allow update: if false;
       allow delete: if isOwner();
     }
+
+    // Videos stored in Firestore as binary chunks (used while Cloud Storage is not enabled).
+    // Readable by id (random) like images; only staff can upload, only the admin can delete.
+    match /media/{id} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if hasProfile();
+      allow update: if false;
+      allow delete: if isOwner();
+
+      match /chunks/{chunk} {
+        allow read: if true;
+        allow create: if hasProfile()
+          && request.resource.data.data is bytes
+          && request.resource.data.data.size() < 1000000;
+        allow update: if false;
+        allow delete: if isOwner();
+      }
+    }
+
+    // Site visits: sizes + site photos/videos (admin only)
+    match /sites/{id} { allow read, write: if isOwner(); }
 
     match /karigars/{id} {
       allow get: if isOwner() || (isKarigar() && myKarigarId() == id);

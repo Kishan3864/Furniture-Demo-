@@ -27,6 +27,8 @@ import type {
   Payment,
   PayMode,
   Priority,
+  Site,
+  SiteEntry,
   StageDef,
   StatusDoc,
   StockItem,
@@ -43,6 +45,7 @@ export interface SeedResult {
   stock: number;
   stockMoves: number;
   expenses: number;
+  sites: number;
 }
 
 const SEED_STAGES: StageDef[] = [
@@ -115,6 +118,34 @@ const CUSTOMERS: Omit<Customer, 'id' | 'deleted' | 'createdAt'>[] = [
   { name: 'Priya Singh', phone: '9302345678', address: '45, Saket Nagar, Indore', notes: 'Call after 5 PM' },
   { name: 'Mohd. Irfan', phone: '9425456789', address: 'Khajrana Main Road, Indore', notes: '' },
   { name: 'Neha Gupta', phone: '9171567890', address: '12, Scheme 54, Indore', notes: 'Reference: Ramesh Sharma' },
+];
+
+/** [label, L, W, H, unit, notes] */
+type SiteRow = [string, number | null, number | null, number | null, LengthUnit, string];
+const SITES: { c: number; off: number; title: string; notes: string; entries: SiteRow[] }[] = [
+  {
+    c: 5,
+    off: -2,
+    title: '3BHK flat - wardrobes + TV unit',
+    notes: 'Customer wants all wardrobes in walnut laminate. Electric points behind TV wall to be shifted by electrician first.',
+    entries: [
+      ['Master bedroom wardrobe', 8, 2, 7.5, 'ft', 'Wall to wall, skirting 4 in. Loft above up to ceiling.'],
+      ['Kids room wardrobe', 6, 2, 7, 'ft', 'Window on right side - keep 6 in gap.'],
+      ['Living room TV unit', 9, 1.5, 7, 'ft', 'TV 55 in. Back panel with fluted design.'],
+      ['Shoe rack near door', 42, 14, 36, 'inch', ''],
+    ],
+  },
+  {
+    c: 3,
+    off: -6,
+    title: 'Kitchen renovation',
+    notes: 'L-shape kitchen. Old cabinets to be removed by customer. Granite already done.',
+    entries: [
+      ['Kitchen wall A (sink side)', 10.5, 2, 2.8, 'ft', 'Sink centre 3 ft from left corner.'],
+      ['Kitchen wall B (hob side)', 7, 2, 2.8, 'ft', 'Chimney point at 6.5 ft.'],
+      ['Overhead cabinets', 17.5, 1.2, 2.5, 'ft', 'Ceiling height 10 ft.'],
+    ],
+  },
 ];
 
 const KARIGARS: Omit<Karigar, 'id' | 'deleted' | 'createdAt'>[] = [
@@ -509,6 +540,37 @@ export async function seedDemoData(db: Firestore, opts?: { by?: string }): Promi
     put(doc(collection(db, 'expenses')), { ...e, demo: true });
   });
 
+  // Site visits (sizes recorded at the customer's site; photos/videos are added by the user)
+  SITES.forEach((sv, i) => {
+    const cust = customers[sv.c];
+    const ref = doc(collection(db, 'sites'));
+    const entries: SiteEntry[] = sv.entries.map(([label, l, w, h, unit, notes], j) => ({
+      id: `demo${i}e${j}`,
+      label,
+      unit,
+      l,
+      w,
+      h,
+      notes,
+    }));
+    const site: Omit<Site, 'id'> = {
+      customerId: cust.id,
+      customerName: cust.name,
+      customerPhone: cust.phone,
+      address: cust.address || '',
+      title: sv.title,
+      visitDate: dateStr(sv.off),
+      entries,
+      media: [],
+      notes: sv.notes,
+      orderIds: [],
+      deleted: false,
+      createdAt: msAt(sv.off, 11),
+      updatedAt: msAt(sv.off, 12),
+    };
+    put(ref, { ...site, demo: true });
+  });
+
   put(ocRef, { next: orderN }, true);
   put(rcRef, { next: receiptN }, true);
 
@@ -531,6 +593,7 @@ export async function seedDemoData(db: Firestore, opts?: { by?: string }): Promi
     stock: STOCK.length,
     stockMoves: MOVES.length,
     expenses: EXPENSES.length,
+    sites: SITES.length,
   };
 }
 
@@ -539,7 +602,7 @@ export async function seedDemoData(db: Firestore, opts?: { by?: string }): Promi
  * Status mirrors are removed via the demo orders' tokens (status docs cannot be listed).
  */
 export async function removeDemoData(db: Firestore): Promise<number> {
-  const cols = ['orders', 'finance', 'payments', 'labour', 'customers', 'karigars', 'stock', 'stockMoves', 'expenses'];
+  const cols = ['orders', 'finance', 'payments', 'labour', 'customers', 'karigars', 'stock', 'stockMoves', 'expenses', 'sites'];
   const refs: DocumentReference[] = [];
   for (const c of cols) {
     const snap = await getDocs(query(collection(db, c), where('demo', '==', true)));

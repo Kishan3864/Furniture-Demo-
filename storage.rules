@@ -18,10 +18,20 @@ service firebase.storage {
       return request.resource.size < 10 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
     }
+    function isMedia() {
+      return isImage() || (request.resource.size < 300 * 1024 * 1024
+        && request.resource.contentType.matches('video/.*'));
+    }
 
     match /orders/{orderId}/{folder}/{file} {
       allow read: if isStaff();
-      allow create, update: if isStaff() && isImage();
+      allow create, update: if isStaff() && isMedia();
+      allow delete: if isOwner();
+    }
+
+    match /sites/{siteId}/{file} {
+      allow read: if isStaff();
+      allow create, update: if isOwner() && isMedia();
       allow delete: if isOwner();
     }
 

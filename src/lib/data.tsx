@@ -13,6 +13,7 @@ import type {
   Labour,
   Order,
   Payment,
+  Site,
   StockItem,
   StockMove,
   WorkshopSettings,
@@ -31,6 +32,8 @@ export interface DataState {
   stock: StockItem[];
   stockMoves: StockMove[];
   expenses: Expense[];
+  /** site visits (owner only) */
+  sites: Site[];
   /** lookups */
   customerById: Record<string, Customer>;
   orderById: Record<string, Order>;
@@ -50,6 +53,7 @@ const empty: DataState = {
   stock: [],
   stockMoves: [],
   expenses: [],
+  sites: [],
   customerById: {},
   orderById: {},
   karigarById: {},
@@ -69,6 +73,7 @@ type Raw = {
   stock: StockItem[];
   stockMoves: StockMove[];
   expenses: Expense[];
+  sites: Site[];
 };
 
 const initialRaw: Raw = {
@@ -82,6 +87,7 @@ const initialRaw: Raw = {
   stock: [],
   stockMoves: [],
   expenses: [],
+  sites: [],
 };
 
 export function DataProvider({ children }: { children: ReactNode }) {
@@ -98,7 +104,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const d = db();
     const unsubs: Unsubscribe[] = [];
     const keys: (keyof Raw)[] = isOwner
-      ? ['settings', 'customers', 'orders', 'finance', 'payments', 'karigars', 'labour', 'stock', 'stockMoves', 'expenses']
+      ? ['settings', 'customers', 'orders', 'finance', 'payments', 'karigars', 'labour', 'stock', 'stockMoves', 'expenses', 'sites']
       : ['settings', 'orders'];
     setPending(new Set(keys));
     const done = (k: string) =>
@@ -152,6 +158,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       listen('stock', collection(d, 'stock'));
       listen('stockMoves', collection(d, 'stockMoves'));
       listen('expenses', collection(d, 'expenses'));
+      listen('sites', collection(d, 'sites'));
     } else if (user.karigarId) {
       listen('orders', query(collection(d, 'orders'), where('karigarIds', 'array-contains', user.karigarId)));
     } else {
@@ -175,6 +182,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       stock: [...raw.stock].sort((a, b) => a.name.localeCompare(b.name)),
       stockMoves: [...raw.stockMoves].sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.createdAt - a.createdAt),
       expenses: [...raw.expenses].sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.createdAt - a.createdAt),
+      sites: [...raw.sites].sort((a, b) => (b.visitDate || '').localeCompare(a.visitDate || '') || b.createdAt - a.createdAt),
       customerById: byId(raw.customers),
       orderById: byId(raw.orders),
       karigarById: byId(raw.karigars),

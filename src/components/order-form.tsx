@@ -4,14 +4,15 @@ import { useRouter } from 'next/navigation';
 import { useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { addDays } from 'date-fns';
 import { toast } from 'sonner';
-import { ImagePlus, Phone, Plus, Search, Trash2, UserPlus } from 'lucide-react';
+import { ImagePlus, Phone, Plus, Ruler, Search, Trash2, UserPlus } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useData } from '@/lib/data';
 import { useT } from '@/lib/i18n';
 import { createOrder, newId, updateOrder } from '@/lib/actions';
 import { deleteImage, uploadOrderPhotos } from '@/lib/upload';
 import { orderSchema, validate } from '@/lib/schemas';
-import type { ExtraMeasure, LengthUnit, Order, PayMode, Photo, Priority } from '@/lib/types';
+import type { ExtraMeasure, LengthUnit, Order, PayMode, Photo, Priority, Site, SiteEntry } from '@/lib/types';
+import { linkOrderToSite } from '@/lib/actions-sites';
 import { cn, convertLen, errMsg, money, toDateStr, todayStr } from '@/lib/utils';
 import {
   Button,
@@ -241,7 +242,16 @@ function CustomerPicker({
 
 /* ------------------------------ Order form ------------------------------ */
 
-export default function OrderForm({ order, initialCustomerId }: { order?: Order; initialCustomerId?: string }) {
+export default function OrderForm({
+  order,
+  initialCustomerId,
+  fromSite,
+}: {
+  order?: Order;
+  initialCustomerId?: string;
+  /** prefill from a site visit (customer, sizes) and attach its photos/videos */
+  fromSite?: { site: Site; entry?: SiteEntry };
+}) {
   const router = useRouter();
   const t = useT();
   const { user } = useAuth();
@@ -249,9 +259,23 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
   const fin = order ? finance[order.id] : undefined;
   const isEdit = !!order;
 
-  const [f, setF] = useState<FormState>(() =>
-    initState(settings.woodTypes, order, initialCustomerId, fin?.price, fin?.discount),
-  );
+  const [f, setF] = useState<FormState>(() => {
+    const s = initState(settings.woodTypes, order, initialCustomerId, fin?.price, fin?.discount);
+    if (!order && fromSite) {
+      if (fromSite.site.customerId) s.customerId = fromSite.site.customerId;
+      const e = fromSite.entry;
+      if (e) {
+        s.title = e.label || '';
+        s.unit = e.unit || 'ft';
+        s.l = numStr(e.l);
+        s.w = numStr(e.w);
+        s.h = numStr(e.h);
+        s.naapNotes = e.notes || '';
+      }
+    }
+    return s;
+  });
+  const siteMediaCount = !order && fromSite ? (fromSite.site.media || []).length : 0;
   const [existingPhotos, setExistingPhotos] = useState<Photo[]>(order?.designPhotos || []);
   const [removedPhotos, setRemovedPhotos] = useState<Photo[]>([]);
   const [newFiles, setNewFiles] = useState<File[]>([]);
@@ -377,7 +401,14 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
           advance: advanceN,
           advanceMode: f.advanceMode,
           createdBy: user?.name,
+          ...(fromSite
+            ? {
+                siteId: fromSite.site.id,
+                siteMedia: (fromSite.site.media || []).map((m) => ({ ...m, source: 'site' as const })),
+              }
+            : {}),
         });
+        if (fromSite) await linkOrderToSite(fromSite.site.id, id).catch((e) => console.warn('link site', e));
         toast.success(t('Order {no} created', { no: r.orderNo }));
         router.push(`/orders/${id}`);
       }
@@ -393,6 +424,20 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
 
   return (
     <form id="order-form" onSubmit={submit} className="space-y-4" noValidate>
+      {!order && fromSite && (
+        <div className="flex items-start gap-2.5 rounded-lg border border-wood-200 bg-wood-50 p-3 text-sm text-wood-900">
+          <Ruler className="mt-0.5 h-4 w-4 shrink-0 text-wood-600" />
+          <p>
+            {t('Creating order from site visit: {title}', { title: fromSite.site.title })}
+            {fromSite.entry ? ` · ${fromSite.entry.label}` : ''}
+            {siteMediaCount > 0 && (
+              <span className="block text-xs text-wood-600">
+                {t('{n} site photos & videos will be attached to this order.', { n: siteMediaCount })}
+              </span>
+            )}
+          </p>
+        </div>
+      )}
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
           <Section title={t('Customer')} tour="of-customer">
