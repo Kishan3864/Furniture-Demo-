@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Hammer } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useData } from '@/lib/data';
+import { useT } from '@/lib/i18n';
 import { daysLeft } from '@/lib/utils';
 import { EmptyState, PageHeader, PageLoader, Segmented } from '@/components/ui';
 import { OrderCard } from '@/components/order-bits';
@@ -13,6 +14,7 @@ type Tab = 'active' | 'done';
 
 export default function JobsPage() {
   const router = useRouter();
+  const t = useT();
   const { isOwner, user } = useAuth();
   const { loading, orders, settings } = useData();
   const [tab, setTab] = useState<Tab>('active');
@@ -40,16 +42,20 @@ export default function JobsPage() {
   return (
     <div>
       <PageHeader
-        title="Mera Kaam"
-        subtitle={`Namaste ${user?.name || ''} · ${active.length} kaam chalu${overdue ? ` · ${overdue} late` : ''}`}
+        title={t('My Jobs')}
+        subtitle={
+          overdue
+            ? t('Hello {name} · {n} active · {late} late', { name: user?.name || '', n: active.length, late: overdue })
+            : t('Hello {name} · {n} active', { name: user?.name || '', n: active.length })
+        }
       />
       <Segmented
         className="mb-4"
         value={tab}
         onChange={setTab}
         options={[
-          { value: 'active', label: `Chalu (${active.length})` },
-          { value: 'done', label: `Ho gaya (${done.length})` },
+          { value: 'active', label: t('Active ({n})', { n: active.length }) },
+          { value: 'done', label: t('Done ({n})', { n: done.length }) },
         ]}
       />
       {list.length ? (
@@ -61,8 +67,8 @@ export default function JobsPage() {
       ) : (
         <EmptyState
           icon={<Hammer className="h-6 w-6" />}
-          title={tab === 'active' ? 'Abhi koi kaam assign nahi hai' : 'Abhi tak koi kaam pura nahi hua'}
-          description={tab === 'active' ? 'Owner jab kaam assign karega, yahan dikhega.' : undefined}
+          title={tab === 'active' ? t('No jobs assigned yet') : t('No jobs completed yet')}
+          description={tab === 'active' ? t('Jobs will show here when the owner assigns them to you.') : undefined}
         />
       )}
     </div>

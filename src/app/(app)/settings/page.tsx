@@ -7,6 +7,7 @@ import {
   ArrowUp,
   Database,
   ImagePlus,
+  Languages,
   LogOut,
   Plus,
   RotateCcw,
@@ -16,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useData } from '@/lib/data';
+import { LANGUAGES, useLang, useT } from '@/lib/i18n';
 import { db } from '@/lib/firebase';
 import { listDeleted, restoreDoc, restoreOrder, saveSettings } from '@/lib/actions';
 import { uploadImage } from '@/lib/upload';
@@ -34,16 +36,19 @@ import {
   Input,
   PageHeader,
   PageLoader,
+  Segmented,
   Spinner,
   Textarea,
   useConfirm,
 } from '@/components/ui';
 import { ListEditor } from '@/components/list-editor';
 import { StoredImg } from '@/components/stored-image';
+import { ChangePasswordCard } from '@/components/change-password';
 
 /* ------------------------------ Profile ------------------------------ */
 
 function ProfileSection({ settings }: { settings: WorkshopSettings }) {
+  const t = useT();
   const confirm = useConfirm();
   const [f, setF] = useState({
     name: settings.name || '',
@@ -61,7 +66,7 @@ function ProfileSection({ settings }: { settings: WorkshopSettings }) {
     const v = validate(settingsSchema, f);
     if (!v.ok) {
       setErrors(v.errors);
-      toast.error('Form mein galti hai');
+      toast.error(t('Please fix the errors in the form'));
       return;
     }
     setErrors({});
@@ -75,7 +80,7 @@ function ProfileSection({ settings }: { settings: WorkshopSettings }) {
         gst: (v.data.gst || '').toUpperCase(),
         billTerms: v.data.billTerms || '',
       });
-      toast.success('Workshop profile save ho gaya');
+      toast.success(t('Workshop profile saved'));
     } catch (e) {
       toast.error(errMsg(e));
     } finally {
@@ -90,7 +95,7 @@ function ProfileSection({ settings }: { settings: WorkshopSettings }) {
     try {
       const photo = await uploadImage(`workshop/logo-${Date.now()}.jpg`, file, { maxSide: 512 });
       await saveSettings({ logoUrl: photo.url });
-      toast.success('Logo update ho gaya');
+      toast.success(t('Logo updated'));
     } catch (e) {
       toast.error(errMsg(e));
     } finally {
@@ -99,11 +104,11 @@ function ProfileSection({ settings }: { settings: WorkshopSettings }) {
   };
 
   const removeLogo = async () => {
-    const ok = await confirm({ title: 'Logo hatayein?', danger: true, confirmText: 'Hatayein' });
+    const ok = await confirm({ title: t('Remove logo?'), danger: true, confirmText: t('Remove') });
     if (!ok) return;
     try {
       await saveSettings({ logoUrl: '' });
-      toast.success('Logo hata diya');
+      toast.success(t('Logo removed'));
     } catch (e) {
       toast.error(errMsg(e));
     }
@@ -111,7 +116,7 @@ function ProfileSection({ settings }: { settings: WorkshopSettings }) {
 
   return (
     <Card>
-      <CardHeader title="Workshop profile" />
+      <CardHeader title={t('Workshop profile')} />
       <div className="space-y-4 p-4">
         <div className="flex items-center gap-4">
           {settings.logoUrl ? (
@@ -124,28 +129,28 @@ function ProfileSection({ settings }: { settings: WorkshopSettings }) {
           )}
           <div className="flex flex-wrap gap-2">
             <ImagePickButton onPick={onLogo} multiple={false} icon={<ImagePlus className="h-4 w-4" />} loading={uploading} size="sm">
-              {settings.logoUrl ? 'Logo badlein' : 'Logo upload'}
+              {settings.logoUrl ? t('Change logo') : t('Upload logo')}
             </ImagePickButton>
             {settings.logoUrl && (
               <Button variant="ghost" size="sm" icon={<X className="h-4 w-4" />} onClick={removeLogo}>
-                Hatayein
+                {t('Remove')}
               </Button>
             )}
-            <p className="w-full text-xs text-wood-600">Bill, receipt aur status page par dikhega. Square logo best rahega.</p>
+            <p className="w-full text-xs text-wood-600">{t('Shown on bills, receipts and the customer status page. A square logo works best.')}</p>
           </div>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Workshop ka naam" required error={errors.name}>
+          <Field label={t('Workshop name')} required error={errors.name}>
             <Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} invalid={!!errors.name} />
           </Field>
-          <Field label="Tagline" error={errors.tagline}>
+          <Field label={t('Tagline')} error={errors.tagline}>
             <Input value={f.tagline} onChange={(e) => setF({ ...f, tagline: e.target.value })} placeholder="Brighton Solution" />
           </Field>
-          <Field label="Phone" error={errors.phone}>
+          <Field label={t('Phone')} error={errors.phone}>
             <Input value={f.phone} inputMode="tel" onChange={(e) => setF({ ...f, phone: e.target.value })} />
           </Field>
-          <Field label="GSTIN (optional)" error={errors.gst} hint="Khaali chhod sakte hain">
+          <Field label={t('GSTIN (optional)')} error={errors.gst} hint={t('You can leave this empty')}>
             <Input
               value={f.gst}
               onChange={(e) => setF({ ...f, gst: e.target.value.toUpperCase() })}
@@ -154,16 +159,16 @@ function ProfileSection({ settings }: { settings: WorkshopSettings }) {
               placeholder="23ABCDE1234F1Z5"
             />
           </Field>
-          <Field label="Address" error={errors.address} className="sm:col-span-2">
+          <Field label={t('Address')} error={errors.address} className="sm:col-span-2">
             <Textarea value={f.address} rows={2} onChange={(e) => setF({ ...f, address: e.target.value })} />
           </Field>
-          <Field label="Bill / estimate terms" error={errors.billTerms} className="sm:col-span-2" hint="Bill ke neeche print hoga">
+          <Field label={t('Bill / estimate terms')} error={errors.billTerms} className="sm:col-span-2" hint={t('Printed at the bottom of bills')}>
             <Textarea value={f.billTerms} rows={3} onChange={(e) => setF({ ...f, billTerms: e.target.value })} />
           </Field>
         </div>
         <div className="flex justify-end">
           <Button onClick={save} loading={saving}>
-            Profile save karein
+            {t('Save profile')}
           </Button>
         </div>
       </div>
@@ -188,6 +193,7 @@ function ListSection({
   hint: string;
   placeholder: string;
 }) {
+  const t = useT();
   const saved = settings[field] || [];
   const [items, setItems] = useState<string[]>(saved);
   const [saving, setSaving] = useState(false);
@@ -198,11 +204,11 @@ function ListSection({
   const dirty = JSON.stringify(items) !== savedKey;
 
   const save = async () => {
-    if (!items.length) return toast.error('Kam se kam 1 item rakhein');
+    if (!items.length) return toast.error(t('Keep at least 1 item'));
     setSaving(true);
     try {
       await saveSettings({ [field]: items } as Partial<WorkshopSettings>);
-      toast.success(`${title} save ho gaya`);
+      toast.success(t('{name} saved', { name: title }));
     } catch (e) {
       toast.error(errMsg(e));
     } finally {
@@ -212,21 +218,21 @@ function ListSection({
 
   return (
     <Card>
-      <CardHeader title={title} action={dirty ? <Badge tone="amber">Unsaved</Badge> : undefined} />
+      <CardHeader title={title} action={dirty ? <Badge tone="amber">{t('Unsaved')}</Badge> : undefined} />
       <div className="space-y-3 p-4">
         <p className="text-xs text-wood-600">{hint}</p>
         <ListEditor items={items} onChange={setItems} placeholder={placeholder} />
         <div className="flex flex-wrap justify-end gap-2">
           <Button variant="ghost" size="sm" icon={<RotateCcw className="h-3.5 w-3.5" />} onClick={() => setItems(DEFAULT_SETTINGS[field])}>
-            Default
+            {t('Default')}
           </Button>
           {dirty && (
             <Button variant="outline" size="sm" onClick={() => setItems(saved)}>
-              Cancel
+              {t('Cancel')}
             </Button>
           )}
           <Button size="sm" onClick={save} loading={saving} disabled={!dirty}>
-            Save
+            {t('Save')}
           </Button>
         </div>
       </div>
@@ -237,6 +243,7 @@ function ListSection({
 /* ------------------------------ Stages ------------------------------ */
 
 function StagesSection({ settings }: { settings: WorkshopSettings }) {
+  const t = useT();
   const { orders } = useData();
   const confirm = useConfirm();
   const toDraft = (s: StageDef[]) => s.map((x) => ({ name: x.name, percent: String(x.percent) }));
@@ -264,18 +271,18 @@ function StagesSection({ settings }: { settings: WorkshopSettings }) {
   };
 
   const check = (): string => {
-    if (parsed.length < 3) return 'Kam se kam 3 stage chahiye';
+    if (parsed.length < 3) return t('At least 3 stages are needed');
     const names = new Set<string>();
     for (let i = 0; i < parsed.length; i++) {
       const s = parsed[i];
-      if (!s.name) return `Stage ${i + 1} ka naam khaali hai`;
-      if (names.has(s.name.toLowerCase())) return `"${s.name}" do baar hai`;
+      if (!s.name) return t('Stage {n} has no name', { n: i + 1 });
+      if (names.has(s.name.toLowerCase())) return t('"{name}" is used twice', { name: s.name });
       names.add(s.name.toLowerCase());
       if (!Number.isFinite(s.percent) || s.percent < 0 || s.percent > 100 || rows[i].percent.trim() === '')
-        return `"${s.name}" ka % 0 se 100 ke beech ho`;
-      if (i > 0 && s.percent <= parsed[i - 1].percent) return `"${s.name}" ka % pichhli stage se zyada hona chahiye`;
+        return t('"{name}" % must be between 0 and 100', { name: s.name });
+      if (i > 0 && s.percent <= parsed[i - 1].percent) return t('"{name}" % must be higher than the previous stage', { name: s.name });
     }
-    if (parsed[parsed.length - 1].percent !== 100) return 'Aakhri stage (Delivered) 100% honi chahiye';
+    if (parsed[parsed.length - 1].percent !== 100) return t('The last stage (Delivered) must be 100%');
     return '';
   };
 
@@ -287,21 +294,19 @@ function StagesSection({ settings }: { settings: WorkshopSettings }) {
       parsed.length !== settings.stages.length || parsed.some((s, i) => s.name !== settings.stages[i]?.name);
     if (structural && activeOrders > 0) {
       const ok = await confirm({
-        title: 'Stages badalne hain?',
-        message: (
-          <>
-            <b>{activeOrders}</b> active orders apni stage <b>number</b> ke hisaab se nayi list se match honge (jaise stage 3 = nayi list ki
-            3rd stage). Order ka stage naam agle update par badlega.
-          </>
+        title: t('Change stages?'),
+        message: t(
+          '{n} active orders will be matched to the new list by stage number (for example stage 3 = the 3rd stage in the new list). The stage name on each order changes at its next update.',
+          { n: activeOrders },
         ),
-        confirmText: 'Haan, save karein',
+        confirmText: t('Yes, save'),
       });
       if (!ok) return;
     }
     setSaving(true);
     try {
       await saveSettings({ stages: parsed.map((s) => ({ name: s.name, percent: Math.round(s.percent) })) });
-      toast.success('Stages save ho gaye');
+      toast.success(t('Stages saved'));
     } catch (e) {
       toast.error(errMsg(e));
     } finally {
@@ -311,11 +316,10 @@ function StagesSection({ settings }: { settings: WorkshopSettings }) {
 
   return (
     <Card>
-      <CardHeader title="Kaam ki stages" action={dirty ? <Badge tone="amber">Unsaved</Badge> : undefined} />
+      <CardHeader title={t('Work stages')} action={dirty ? <Badge tone="amber">{t('Unsaved')}</Badge> : undefined} />
       <div className="space-y-3 p-4">
         <p className="text-xs text-wood-600">
-          Har stage ka % progress bar mein dikhta hai. <b>Aakhri stage = Delivered</b>, aur usse <b>pehle wali = Ready</b> maani jaati hai
-          (dashboard aur delivery list isi se chalti hai). % hamesha badhta hua ho.
+          {t('Each stage % is shown in the progress bar. The last stage means Delivered and the one before it means Ready (used by the dashboard and delivery list). The % must keep increasing.')}
         </p>
         <div className="space-y-2">
           {rows.map((r, i) => {
@@ -326,10 +330,10 @@ function StagesSection({ settings }: { settings: WorkshopSettings }) {
                   {i + 1}
                 </span>
                 <div className="relative min-w-0 flex-1">
-                  <Input value={r.name} onChange={(e) => update(i, { name: e.target.value })} placeholder="Stage naam" maxLength={30} />
+                  <Input value={r.name} onChange={(e) => update(i, { name: e.target.value })} placeholder={t('Stage name')} maxLength={30} />
                   {tag && (
                     <span className="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 sm:block">
-                      <Badge tone={tag === 'Delivered' ? 'green' : 'purple'}>{tag}</Badge>
+                      <Badge tone={tag === 'Delivered' ? 'green' : 'purple'}>{t(tag)}</Badge>
                     </span>
                   )}
                 </div>
@@ -351,7 +355,7 @@ function StagesSection({ settings }: { settings: WorkshopSettings }) {
                     onClick={() => move(i, -1)}
                     disabled={i === 0}
                     className="rounded-lg p-1.5 text-wood-600 hover:bg-wood-100 disabled:opacity-30"
-                    aria-label="Upar"
+                    aria-label={t('Move up')}
                   >
                     <ArrowUp className="h-4 w-4" />
                   </button>
@@ -360,7 +364,7 @@ function StagesSection({ settings }: { settings: WorkshopSettings }) {
                     onClick={() => move(i, 1)}
                     disabled={i === rows.length - 1}
                     className="rounded-lg p-1.5 text-wood-600 hover:bg-wood-100 disabled:opacity-30"
-                    aria-label="Neeche"
+                    aria-label={t('Move down')}
                   >
                     <ArrowDown className="h-4 w-4" />
                   </button>
@@ -369,7 +373,7 @@ function StagesSection({ settings }: { settings: WorkshopSettings }) {
                     onClick={() => setRows(rows.filter((_, k) => k !== i))}
                     disabled={rows.length <= 3}
                     className="rounded-lg p-1.5 text-wood-600 hover:bg-red-50 hover:text-red-600 disabled:opacity-30"
-                    aria-label="Hatayein"
+                    aria-label={t('Remove')}
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -396,7 +400,7 @@ function StagesSection({ settings }: { settings: WorkshopSettings }) {
               setRows(next);
             }}
           >
-            Stage jodein
+            {t('Add stage')}
           </Button>
           <div className="flex gap-2">
             <Button
@@ -405,15 +409,15 @@ function StagesSection({ settings }: { settings: WorkshopSettings }) {
               icon={<RotateCcw className="h-3.5 w-3.5" />}
               onClick={() => setRows(toDraft(DEFAULT_SETTINGS.stages))}
             >
-              Default
+              {t('Default')}
             </Button>
             {dirty && (
               <Button variant="outline" size="sm" onClick={() => setRows(toDraft(settings.stages))}>
-                Cancel
+                {t('Cancel')}
               </Button>
             )}
             <Button size="sm" onClick={save} loading={saving} disabled={!dirty}>
-              Save stages
+              {t('Save stages')}
             </Button>
           </div>
         </div>
@@ -433,17 +437,18 @@ const TRASH_COLS: { col: TrashCol; label: string; line: (r: Rec) => string }[] =
     label: 'Orders',
     line: (r) => `${r.orderNo || ''} · ${r.itemType || ''}${r.title ? ` - ${r.title}` : ''} · ${r.customerName || ''}`,
   },
-  { col: 'customers', label: 'Grahak', line: (r) => `${r.name || ''} · ${r.phone || ''}` },
-  { col: 'karigars', label: 'Karigar', line: (r) => `${r.name || ''}${r.skill ? ` · ${r.skill}` : ''}` },
+  { col: 'customers', label: 'Customers', line: (r) => `${r.name || ''} · ${r.phone || ''}` },
+  { col: 'karigars', label: 'Workers', line: (r) => `${r.name || ''}${r.skill ? ` · ${r.skill}` : ''}` },
   { col: 'stock', label: 'Stock items', line: (r) => `${r.name || ''} · ${r.qty ?? 0} ${r.unit || ''}` },
   {
     col: 'expenses',
-    label: 'Kharcha',
+    label: 'Expenses',
     line: (r) => `${fmtDate(String(r.date || ''))} · ${r.category || ''} · ${money(Number(r.amount) || 0)}`,
   },
 ];
 
 function TrashSection({ settings }: { settings: WorkshopSettings }) {
+  const t = useT();
   const [data, setData] = useState<Record<TrashCol, Rec[]> | null>(null);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
@@ -451,7 +456,7 @@ function TrashSection({ settings }: { settings: WorkshopSettings }) {
   const load = async () => {
     setLoading(true);
     try {
-      const entries = await Promise.all(TRASH_COLS.map(async (t) => [t.col, (await listDeleted(t.col)) as Rec[]] as const));
+      const entries = await Promise.all(TRASH_COLS.map(async (c) => [c.col, (await listDeleted(c.col)) as Rec[]] as const));
       const out = Object.fromEntries(entries) as Record<TrashCol, Rec[]>;
       (Object.keys(out) as TrashCol[]).forEach((k) =>
         out[k].sort((a, b) => (Number(b.deletedAt) || 0) - (Number(a.deletedAt) || 0)),
@@ -470,7 +475,7 @@ function TrashSection({ settings }: { settings: WorkshopSettings }) {
       if (col === 'orders') await restoreOrder(r as unknown as Order, settings);
       else await restoreDoc(col, r.id);
       setData((d) => (d ? { ...d, [col]: d[col].filter((x) => x.id !== r.id) } : d));
-      toast.success('Wapas aa gaya');
+      toast.success(t('Restored'));
     } catch (e) {
       toast.error(errMsg(e));
     } finally {
@@ -485,36 +490,35 @@ function TrashSection({ settings }: { settings: WorkshopSettings }) {
       <CardHeader
         title={
           <span className="flex items-center gap-2">
-            <Trash2 className="h-4 w-4" /> Recycle bin
+            <Trash2 className="h-4 w-4" /> {t('Recycle bin')}
           </span>
         }
         action={
           <Button variant="outline" size="sm" onClick={load} loading={loading} icon={<RotateCcw className="h-3.5 w-3.5" />}>
-            {data ? 'Refresh' : 'Deleted items dekhein'}
+            {data ? t('Refresh') : t('Show deleted items')}
           </Button>
         }
       />
       <div className="p-4">
         {!data ? (
           <p className="text-sm text-wood-600">
-            Delete kiye gaye orders, grahak, karigar, stock aur kharcha yahan se wapas la sakte hain. Order wapas laane par uske payments bhi wapas
-            aate hain.
+            {t('Deleted orders, customers, workers, stock items and expenses can be restored from here. Restoring an order also restores its payments.')}
           </p>
         ) : total === 0 ? (
-          <p className="py-4 text-center text-sm text-wood-600">Recycle bin khaali hai</p>
+          <p className="py-4 text-center text-sm text-wood-600">{t('The recycle bin is empty')}</p>
         ) : (
           <div className="space-y-4">
-            {TRASH_COLS.filter((t) => data[t.col].length).map((t) => (
-              <div key={t.col}>
+            {TRASH_COLS.filter((c) => data[c.col].length).map((c) => (
+              <div key={c.col}>
                 <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-wood-500">
-                  {t.label} ({data[t.col].length})
+                  {t(c.label)} ({data[c.col].length})
                 </p>
                 <ul className="divide-y divide-wood-50 rounded-xl border border-wood-100">
-                  {data[t.col].map((r) => (
+                  {data[c.col].map((r) => (
                     <li key={r.id} className="flex items-center justify-between gap-2 px-3 py-2">
-                      <span className="min-w-0 truncate text-sm text-wood-900">{t.line(r)}</span>
-                      <Button size="sm" variant="secondary" loading={busy === r.id} onClick={() => restore(t.col, r)}>
-                        Restore
+                      <span className="min-w-0 truncate text-sm text-wood-900">{c.line(r)}</span>
+                      <Button size="sm" variant="secondary" loading={busy === r.id} onClick={() => restore(c.col, r)}>
+                        {t('Restore')}
                       </Button>
                     </li>
                   ))}
@@ -522,7 +526,7 @@ function TrashSection({ settings }: { settings: WorkshopSettings }) {
               </div>
             ))}
             {data.karigars.length > 0 && (
-              <p className="text-xs text-wood-600">Karigar restore ke baad Karigar page se unhe dobara active karein.</p>
+              <p className="text-xs text-wood-600">{t('After restoring a worker, set them as active again from the Workers page.')}</p>
             )}
           </div>
         )}
@@ -534,6 +538,7 @@ function TrashSection({ settings }: { settings: WorkshopSettings }) {
 /* ------------------------------ Demo data ------------------------------ */
 
 function DemoSection() {
+  const t = useT();
   const { user } = useAuth();
   const confirm = useConfirm();
   const [busy, setBusy] = useState<'add' | 'remove' | null>(null);
@@ -546,15 +551,15 @@ function DemoSection() {
 
   const add = async () => {
     const ok = await confirm({
-      title: 'Demo data daalein?',
-      message: 'Kuch sample grahak, karigar, orders (alag-alag stages), payments, stock aur kharcha jud jayenge. Baad mein "Demo data hatayein" se hata sakte hain.',
-      confirmText: 'Haan, daalein',
+      title: t('Load demo data?'),
+      message: t('Sample customers, workers, orders (at different stages), payments, stock and expenses will be added. You can remove them later with "Remove demo data".'),
+      confirmText: t('Yes, load it'),
     });
     if (!ok) return;
     setBusy('add');
     try {
       const r = await seedDemoData(db(), { by: user?.name });
-      toast.success(`Demo data taiyaar: ${r.orders} orders, ${r.customers} grahak, ${r.payments} payments`);
+      toast.success(t('Demo data ready: {orders} orders, {customers} customers, {payments} payments', { orders: r.orders, customers: r.customers, payments: r.payments }));
     } catch (e) {
       toast.error(errMsg(e));
     } finally {
@@ -564,16 +569,16 @@ function DemoSection() {
 
   const remove = async () => {
     const ok = await confirm({
-      title: 'Demo data hatayein?',
-      message: 'Sirf demo wale records hamesha ke liye delete honge. Aapka asli data safe rahega.',
-      confirmText: 'Hatayein',
+      title: t('Remove demo data?'),
+      message: t('Only the demo records will be deleted permanently. Your real data stays safe.'),
+      confirmText: t('Remove'),
       danger: true,
     });
     if (!ok) return;
     setBusy('remove');
     try {
       const n = await removeDemoData(db());
-      toast.success(n ? `${n} demo records hata diye` : 'Koi demo data nahi mila');
+      toast.success(n ? t('{n} demo records removed', { n }) : t('No demo data found'));
     } catch (e) {
       toast.error(errMsg(e));
     } finally {
@@ -587,20 +592,20 @@ function DemoSection() {
         <CardHeader
           title={
             <span className="flex items-center gap-2">
-              <Database className="h-4 w-4" /> Demo data
+              <Database className="h-4 w-4" /> {t('Demo data')}
             </span>
           }
         />
         <div className="space-y-3 p-4">
           <p className="text-sm text-wood-700">
-            App try karne ke liye sample data daalein - overdue, aaj ki delivery, ready orders, baaki payments, low stock sab dikhega.
+            {t("Load sample data to try the app - you will see overdue orders, today's deliveries, ready orders, pending payments and low stock.")}
           </p>
           <div className="flex flex-wrap gap-2">
             <Button onClick={add} loading={busy === 'add'} disabled={!!busy} icon={<Sparkles className="h-4 w-4" />}>
-              Demo data daalein
+              {t('Load demo data')}
             </Button>
             <Button variant="outline" onClick={remove} loading={busy === 'remove'} disabled={!!busy} icon={<Trash2 className="h-4 w-4" />}>
-              Demo data hatayein
+              {t('Remove demo data')}
             </Button>
           </div>
         </div>
@@ -612,24 +617,47 @@ function DemoSection() {
 /* ------------------------------ Account ------------------------------ */
 
 function AccountSection() {
+  const t = useT();
   const { user, logout } = useAuth();
   return (
     <Card>
-      <CardHeader title="Mera account" />
+      <CardHeader title={t('My account')} />
       <div className="flex flex-wrap items-center justify-between gap-3 p-4">
         <div className="min-w-0">
           <p className="truncate font-semibold text-wood-950">{user?.name}</p>
           <p className="truncate text-sm text-wood-600">{user?.email}</p>
           <Badge tone="wood" className="mt-1">
-            {user?.role === 'owner' ? 'Owner / Admin' : 'Karigar'}
+            {user?.role === 'owner' ? t('Owner / Admin') : t('Worker')}
           </Badge>
         </div>
         <Button variant="outline" icon={<LogOut className="h-4 w-4" />} onClick={logout}>
-          Logout
+          {t('Sign out')}
         </Button>
       </div>
       <div className="border-t border-wood-100 px-4 py-3 text-xs text-wood-600">
-        Karigar ka login Karigar page se banayein - woh sirf apne assign kiye kaam dekh payenge (price/payment nahi).
+        {t('Create worker logins from the Workers page. Workers only see the jobs assigned to them (no prices or payments).')}
+      </div>
+    </Card>
+  );
+}
+
+/* ------------------------------ Language ------------------------------ */
+
+function LanguageSection() {
+  const t = useT();
+  const { lang, setLang } = useLang();
+  return (
+    <Card>
+      <CardHeader
+        title={
+          <span className="flex items-center gap-2">
+            <Languages className="h-4 w-4" /> {t('Language')}
+          </span>
+        }
+      />
+      <div className="space-y-2 p-4">
+        <Segmented value={lang} onChange={setLang} options={LANGUAGES.map((l) => ({ value: l.value, label: l.label }))} />
+        <p className="text-xs text-wood-600">{t('English is the default. Hinglish is optional. This choice is saved on this device.')}</p>
       </div>
     </Card>
   );
@@ -640,6 +668,7 @@ function AccountSection() {
 export default function SettingsPage() {
   const { isOwner } = useAuth();
   const { loading, settings } = useData();
+  const t = useT();
 
   if (!isOwner) return <PageLoader />;
   if (loading)
@@ -651,13 +680,15 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Settings" subtitle="Workshop profile, lists, stages aur data" />
+      <PageHeader title={t('Settings')} subtitle={t('Workshop profile, lists, stages and data')} />
       <div className="grid gap-6 lg:grid-cols-5">
         <div className="space-y-6 lg:col-span-3">
           <ProfileSection settings={settings} />
           <StagesSection settings={settings} />
+          <ChangePasswordCard />
         </div>
         <div className="space-y-6 lg:col-span-2">
+          <LanguageSection />
           <AccountSection />
           <DemoSection />
         </div>
@@ -666,30 +697,30 @@ export default function SettingsPage() {
         <ListSection
           settings={settings}
           field="itemTypes"
-          title="Item types"
-          hint="Order banate waqt yeh options dikhenge (Almaari, Bed, Table...)."
-          placeholder="jaise Dressing Table"
+          title={t('Item types')}
+          hint={t('These options appear when you create an order (Wardrobe, Bed, Table...).')}
+          placeholder={t('e.g. Dressing Table')}
         />
         <ListSection
           settings={settings}
           field="woodTypes"
-          title="Lakdi / material"
-          hint="Wood type dropdown ke options."
-          placeholder="jaise Oak"
+          title={t('Wood / material types')}
+          hint={t('Options for the wood type dropdown.')}
+          placeholder={t('e.g. Oak')}
         />
         <ListSection
           settings={settings}
           field="expenseCategories"
-          title="Kharcha categories"
-          hint="Expenses mein category ke options."
-          placeholder="jaise Petrol"
+          title={t('Expense categories')}
+          hint={t('Category options for expenses.')}
+          placeholder={t('e.g. Petrol')}
         />
         <ListSection
           settings={settings}
           field="skills"
-          title="Karigar skills"
-          hint="Karigar ki skill ke options."
-          placeholder="jaise Welder"
+          title={t('Worker skills')}
+          hint={t('Skill options for workers.')}
+          placeholder={t('e.g. Welder')}
         />
       </div>
       <TrashSection settings={settings} />

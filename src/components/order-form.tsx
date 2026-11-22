@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { ImagePlus, Phone, Plus, Search, Trash2, UserPlus } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useData } from '@/lib/data';
+import { useT } from '@/lib/i18n';
 import { createOrder, newId, updateOrder } from '@/lib/actions';
 import { deleteImage, uploadOrderPhotos } from '@/lib/upload';
 import { orderSchema, validate } from '@/lib/schemas';
@@ -127,6 +128,7 @@ function CustomerPicker({
   onChange: (id: string) => void;
   error?: string;
 }) {
+  const t = useT();
   const { customers, customerById } = useData();
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
@@ -164,7 +166,7 @@ function CustomerPicker({
               setOpen(true);
             }}
           >
-            Badlein
+            {t('Change')}
           </Button>
         </div>
       ) : (
@@ -179,7 +181,7 @@ function CustomerPicker({
               }}
               onFocus={() => setOpen(true)}
               onBlur={() => setTimeout(() => setOpen(false), 150)}
-              placeholder="Grahak ka naam ya phone..."
+              placeholder={t('Customer name or phone...')}
               className="pl-9"
               invalid={!!error}
             />
@@ -202,7 +204,7 @@ function CustomerPicker({
                     </button>
                   ))
                 ) : (
-                  <div className="px-3 py-3 text-sm text-wood-600">Koi grahak nahi mila</div>
+                  <div className="px-3 py-3 text-sm text-wood-600">{t('No customer found')}</div>
                 )}
                 <button
                   type="button"
@@ -213,17 +215,17 @@ function CustomerPicker({
                   }}
                   className="mt-1 flex w-full items-center gap-2 rounded-lg border-t border-wood-100 px-3 py-2 text-left text-sm font-medium text-wood-700 hover:bg-wood-50"
                 >
-                  <UserPlus className="h-4 w-4" /> {q.trim() ? `"${q.trim()}" naya grahak banayein` : 'Naya grahak banayein'}
+                  <UserPlus className="h-4 w-4" /> {q.trim() ? t('Add "{name}" as new customer', { name: q.trim() }) : t('Add new customer')}
                 </button>
               </div>
             )}
           </div>
           <Button variant="outline" icon={<UserPlus className="h-4 w-4" />} onClick={() => setModal(true)}>
-            <span className="hidden sm:inline">Naya grahak</span>
+            <span className="hidden sm:inline">{t('New customer')}</span>
           </Button>
         </div>
       )}
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-1 text-xs text-red-600">{t(error)}</p>}
       <CustomerModal
         open={modal}
         onClose={() => setModal(false)}
@@ -241,6 +243,7 @@ function CustomerPicker({
 
 export default function OrderForm({ order, initialCustomerId }: { order?: Order; initialCustomerId?: string }) {
   const router = useRouter();
+  const t = useT();
   const { user } = useAuth();
   const { settings, karigars, customerById, finance } = useData();
   const fin = order ? finance[order.id] : undefined;
@@ -270,9 +273,9 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
   };
 
   const itemTypes = useMemo(() => {
-    const t = [...settings.itemTypes];
-    if (f.itemType && !t.includes(f.itemType)) t.push(f.itemType);
-    return t;
+    const list = [...settings.itemTypes];
+    if (f.itemType && !list.includes(f.itemType)) list.push(f.itemType);
+    return list;
   }, [settings.itemTypes, f.itemType]);
 
   const karigarOptions = useMemo(
@@ -323,27 +326,27 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
     const parseLen = (s: string): number | null => (s.trim() === '' ? null : Number(s));
     (['l', 'w', 'h'] as const).forEach((k) => {
       const s = f[k].trim();
-      if (s && (Number.isNaN(Number(s)) || Number(s) < 0)) errs[`naap.${k}`] = 'Sahi number daalein';
+      if (s && (Number.isNaN(Number(s)) || Number(s) < 0)) errs[`naap.${k}`] = 'Enter a valid number';
       else delete errs[`naap.${k}`];
     });
     if (!isEdit) {
-      if (f.advance.trim() && (Number.isNaN(Number(f.advance)) || Number(f.advance) < 0)) errs.advance = 'Sahi amount daalein';
-      else if (advanceN > total) errs.advance = 'Advance total se zyada nahi ho sakta';
+      if (f.advance.trim() && (Number.isNaN(Number(f.advance)) || Number(f.advance) < 0)) errs.advance = 'Enter a valid amount';
+      else if (advanceN > total) errs.advance = 'Advance cannot be more than the total';
     } else if (fin && total < (fin.paid || 0)) {
-      errs.price = `Pehle se ${money(fin.paid)} mil chuka hai - total isse kam nahi ho sakta`;
+      errs.price = t('{amount} is already paid - total cannot be less than this', { amount: money(fin.paid) });
     }
-    if (f.woodChoice === OTHER && !f.woodOther.trim()) errs.wood = 'Lakdi ka naam likhein';
+    if (f.woodChoice === OTHER && !f.woodOther.trim()) errs.wood = 'Enter the wood name';
 
     if (!v.ok || Object.keys(errs).length) {
       setErrors(errs);
-      toast.error('Form mein kuch galti hai - laal wale fields check karein');
+      toast.error(t('Please fix the fields marked in red'));
       return;
     }
     setErrors({});
     const data = { ...v.data, naap: { ...v.data.naap, l: parseLen(f.l), w: parseLen(f.w), h: parseLen(f.h) } };
     const customer = customerById[data.customerId];
     if (!customer) {
-      setErrors({ customerId: 'Grahak nahi mila' });
+      setErrors({ customerId: 'Customer not found' });
       return;
     }
 
@@ -353,18 +356,18 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
       const id = idRef.current;
       let photos = existingPhotos;
       if (newFiles.length) {
-        setUploadMsg(`Photos upload 0/${newFiles.length}`);
-        const uploaded = await uploadOrderPhotos(id, 'design', newFiles, user?.name, (d, t) => setUploadMsg(`Photos upload ${d}/${t}`));
+        setUploadMsg(t('Uploading photos {done}/{total}', { done: 0, total: newFiles.length }));
+        const uploaded = await uploadOrderPhotos(id, 'design', newFiles, user?.name, (d, n) => setUploadMsg(t('Uploading photos {done}/{total}', { done: d, total: n })));
         photos = [...existingPhotos, ...uploaded];
         // keep uploaded photos if a later step fails so retry does not upload again
         setExistingPhotos(photos);
         setNewFiles([]);
       }
-      setUploadMsg('Save ho raha hai...');
+      setUploadMsg(t('Saving...'));
       if (order) {
         await updateOrder(order, data, settings, { designPhotos: photos, customer, fin });
         removedPhotos.forEach((p) => void deleteImage(p.path));
-        toast.success('Order update ho gaya');
+        toast.success(t('Order updated'));
         router.push(`/orders/${order.id}`);
       } else {
         const r = await createOrder(data, settings, {
@@ -375,7 +378,7 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
           advanceMode: f.advanceMode,
           createdBy: user?.name,
         });
-        toast.success(`Order ${r.orderNo} ban gaya`);
+        toast.success(t('Order {no} created', { no: r.orderNo }));
         router.push(`/orders/${id}`);
       }
     } catch (err) {
@@ -392,25 +395,25 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
     <form id="order-form" onSubmit={submit} className="space-y-4" noValidate>
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
-          <Section title="Grahak">
+          <Section title={t('Customer')}>
             <CustomerPicker value={f.customerId} onChange={(id) => set('customerId', id)} error={errors.customerId} />
           </Section>
 
-          <Section title="Item">
-            <Field label="Item type" required error={errors.itemType}>
+          <Section title={t('Item')}>
+            <Field label={t('Item type')} required error={errors.itemType}>
               <div className="flex flex-wrap gap-2">
-                {itemTypes.map((t) => (
-                  <Chip key={t} active={f.itemType === t} onClick={() => set('itemType', t)}>
-                    {t}
+                {itemTypes.map((it) => (
+                  <Chip key={it} active={f.itemType === it} onClick={() => set('itemType', it)}>
+                    {t(it)}
                   </Chip>
                 ))}
               </div>
             </Field>
             <div className="grid grid-cols-3 gap-3">
-              <Field label="Title / detail" className="col-span-2" error={errors.title}>
-                <Input value={f.title} onChange={(e) => set('title', e.target.value)} placeholder="jaise: 3 door sliding" />
+              <Field label={t('Title / detail')} className="col-span-2" error={errors.title}>
+                <Input value={f.title} onChange={(e) => set('title', e.target.value)} placeholder={t('e.g. 3 door sliding')} />
               </Field>
-              <Field label="Quantity" required error={errors.quantity}>
+              <Field label={t('Quantity')} required error={errors.quantity}>
                 <Input
                   type="number"
                   inputMode="numeric"
@@ -424,15 +427,15 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
           </Section>
 
           <Section
-            title="Naap (Measurement)"
+            title={t('Measurements')}
             action={
               <Segmented
                 size="sm"
                 value={f.unit}
                 onChange={changeUnit}
                 options={[
-                  { value: 'ft', label: 'Feet' },
-                  { value: 'inch', label: 'Inch' },
+                  { value: 'ft', label: t('Feet') },
+                  { value: 'inch', label: t('Inch') },
                 ]}
               />
             }
@@ -440,12 +443,12 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
             <div className="grid grid-cols-3 gap-3">
               {(
                 [
-                  ['l', 'Lambai (L)'],
-                  ['w', 'Chaudai (W)'],
-                  ['h', 'Unchai (H)'],
+                  ['l', 'Length (L)'],
+                  ['w', 'Width (W)'],
+                  ['h', 'Height (H)'],
                 ] as const
               ).map(([k, label]) => (
-                <Field key={k} label={label} error={errors[`naap.${k}`]} hint={unitSign}>
+                <Field key={k} label={t(label)} error={errors[`naap.${k}`]} hint={unitSign}>
                   <Input
                     type="number"
                     inputMode="decimal"
@@ -468,7 +471,7 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
                       extra[i] = { ...extra[i], label: e.target.value };
                       set('extra', extra);
                     }}
-                    placeholder="jaise: Shelf gap"
+                    placeholder={t('e.g. Shelf gap')}
                     className="flex-1"
                   />
                   <Input
@@ -478,13 +481,13 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
                       extra[i] = { ...extra[i], value: e.target.value };
                       set('extra', extra);
                     }}
-                    placeholder={`jaise: 14 ${unitSign}`}
+                    placeholder={t('e.g. 14 {unit}', { unit: unitSign })}
                     className="flex-1"
                   />
                   <Button
                     variant="ghost"
                     size="icon"
-                    aria-label="Remove"
+                    aria-label={t('Remove')}
                     onClick={() => set('extra', f.extra.filter((_, j) => j !== i))}
                   >
                     <Trash2 className="h-4 w-4 text-red-600" />
@@ -497,15 +500,15 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
                 icon={<Plus className="h-4 w-4" />}
                 onClick={() => set('extra', [...f.extra, { label: '', value: '' }])}
               >
-                Aur naap jodein
+                {t('Add measurement')}
               </Button>
             </div>
-            <Field label="Naap notes">
-              <Textarea value={f.naapNotes} rows={2} onChange={(e) => set('naapNotes', e.target.value)} placeholder="Deewar, switch board, kone ka dhyaan..." />
+            <Field label={t('Measurement notes')}>
+              <Textarea value={f.naapNotes} rows={2} onChange={(e) => set('naapNotes', e.target.value)} placeholder={t('Wall, switch board, corners to keep in mind...')} />
             </Field>
           </Section>
 
-          <Section title="Design">
+          <Section title={t('Design')}>
             <PhotoGrid
               photos={existingPhotos}
               onRemove={(i) => {
@@ -517,10 +520,10 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
             />
             <FilePreviewGrid files={newFiles} onRemove={(i) => setNewFiles(newFiles.filter((_, j) => j !== i))} />
             <ImagePickButton onPick={(files) => setNewFiles((p) => [...p, ...files])} icon={<ImagePlus className="h-4 w-4" />}>
-              Design photos jodein
+              {t('Add design photos')}
             </ImagePickButton>
-            <p className="text-xs text-wood-600">Photos save karte waqt compress hokar upload hongi.</p>
-            <Field label="Reference link" error={errors.refLink}>
+            <p className="text-xs text-wood-600">{t('Photos are compressed and uploaded when you save.')}</p>
+            <Field label={t('Reference link')} error={errors.refLink}>
               <Input
                 type="url"
                 inputMode="url"
@@ -532,35 +535,35 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
             </Field>
           </Section>
 
-          <Section title="Lakdi / Material">
+          <Section title={t('Wood / Material')}>
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Lakdi (wood type)" error={errors.wood}>
+              <Field label={t('Wood type')} error={errors.wood}>
                 <Select
                   value={f.woodChoice}
                   onChange={(e) => set('woodChoice', e.target.value)}
-                  placeholder="Chunein"
-                  options={[...settings.woodTypes, { value: OTHER, label: 'Other (likhein)' }]}
+                  placeholder={t('Select')}
+                  options={[...settings.woodTypes.map((w) => ({ value: w, label: t(w) })), { value: OTHER, label: t('Other (type it)') }]}
                 />
               </Field>
               {f.woodChoice === OTHER && (
-                <Field label="Lakdi ka naam" error={errors.wood}>
+                <Field label={t('Wood name')} error={errors.wood}>
                   <Input value={f.woodOther} onChange={(e) => set('woodOther', e.target.value)} invalid={!!errors.wood} />
                 </Field>
               )}
-              <Field label="Finish / Polish colour">
-                <Input value={f.finish} onChange={(e) => set('finish', e.target.value)} placeholder="jaise: Walnut matt PU" />
+              <Field label={t('Finish / Polish colour')}>
+                <Input value={f.finish} onChange={(e) => set('finish', e.target.value)} placeholder={t('e.g. Walnut matt PU')} />
               </Field>
             </div>
-            <Field label="Hardware notes">
-              <Textarea value={f.hardware} rows={2} onChange={(e) => set('hardware', e.target.value)} placeholder="Hinges, channel, handle, lock..." />
+            <Field label={t('Hardware notes')}>
+              <Textarea value={f.hardware} rows={2} onChange={(e) => set('hardware', e.target.value)} placeholder={t('Hinges, channels, handles, lock...')} />
             </Field>
           </Section>
         </div>
 
         <div className="space-y-4">
-          <Section title="Paisa">
+          <Section title={t('Payment')}>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Price (₹)" required error={errors.price} className="col-span-2">
+              <Field label={t('Price (₹)')} required error={errors.price} className="col-span-2">
                 <Input
                   type="number"
                   inputMode="decimal"
@@ -570,7 +573,7 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
                   placeholder="0"
                 />
               </Field>
-              <Field label="Discount (₹)" error={errors.discount} className={isEdit ? 'col-span-2' : ''}>
+              <Field label={t('Discount (₹)')} error={errors.discount} className={isEdit ? 'col-span-2' : ''}>
                 <Input
                   type="number"
                   inputMode="decimal"
@@ -581,7 +584,7 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
                 />
               </Field>
               {!isEdit && (
-                <Field label="Advance (₹)" error={errors.advance}>
+                <Field label={t('Advance (₹)')} error={errors.advance}>
                   <Input
                     type="number"
                     inputMode="decimal"
@@ -594,41 +597,41 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
               )}
             </div>
             {!isEdit && advanceN > 0 && (
-              <Field label="Advance mode">
+              <Field label={t('Advance mode')}>
                 <Segmented
                   value={f.advanceMode}
                   onChange={(v) => set('advanceMode', v)}
                   options={[
-                    { value: 'cash', label: 'Cash' },
-                    { value: 'upi', label: 'UPI' },
-                    { value: 'bank', label: 'Bank' },
+                    { value: 'cash', label: t('Cash') },
+                    { value: 'upi', label: t('UPI') },
+                    { value: 'bank', label: t('Bank') },
                   ]}
                 />
               </Field>
             )}
             <div className="grid grid-cols-3 gap-2 rounded-xl bg-wood-50 p-3 text-center text-sm">
               <div>
-                <p className="text-[11px] uppercase text-wood-500">Total</p>
+                <p className="text-[11px] uppercase text-wood-500">{t('Total')}</p>
                 <p className="font-semibold">{money(total)}</p>
               </div>
               <div>
-                <p className="text-[11px] uppercase text-wood-500">{isEdit ? 'Mila' : 'Advance'}</p>
+                <p className="text-[11px] uppercase text-wood-500">{isEdit ? t('Paid') : t('Advance')}</p>
                 <p className="font-semibold text-emerald-700">{money(paidSoFar)}</p>
               </div>
               <div>
-                <p className="text-[11px] uppercase text-wood-500">Baaki</p>
+                <p className="text-[11px] uppercase text-wood-500">{t('Balance')}</p>
                 <p className={cn('font-semibold', balance > 0 ? 'text-red-600' : 'text-emerald-700')}>{money(balance)}</p>
               </div>
             </div>
-            {isEdit && <p className="text-xs text-wood-600">Naya payment order page se &quot;Payment lein&quot; se jodein.</p>}
+            {isEdit && <p className="text-xs text-wood-600">{t('Add new payments from the order page using "Receive payment".')}</p>}
           </Section>
 
-          <Section title="Dates & Priority">
+          <Section title={t('Dates & Priority')}>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Order date" required error={errors.orderDate}>
+              <Field label={t('Order date')} required error={errors.orderDate}>
                 <Input type="date" value={f.orderDate} onChange={(e) => set('orderDate', e.target.value)} invalid={!!errors.orderDate} />
               </Field>
-              <Field label="Delivery date" required error={errors.deliveryDate}>
+              <Field label={t('Delivery date')} required error={errors.deliveryDate}>
                 <Input
                   type="date"
                   value={f.deliveryDate}
@@ -638,22 +641,22 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
                 />
               </Field>
             </div>
-            <Field label="Priority">
+            <Field label={t('Priority')}>
               <Segmented
                 value={f.priority}
                 onChange={(v) => set('priority', v)}
                 size="sm"
                 options={[
-                  { value: 'low', label: 'Low' },
-                  { value: 'normal', label: 'Normal' },
-                  { value: 'high', label: 'High' },
-                  { value: 'urgent', label: 'Urgent' },
+                  { value: 'low', label: t('Low') },
+                  { value: 'normal', label: t('Normal') },
+                  { value: 'high', label: t('High') },
+                  { value: 'urgent', label: t('Urgent') },
                 ]}
               />
             </Field>
           </Section>
 
-          <Section title="Karigar">
+          <Section title={t('Workers')}>
             {karigarOptions.length ? (
               <div className="flex flex-wrap gap-2">
                 {karigarOptions.map((k) => {
@@ -667,24 +670,24 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
                       }
                     >
                       {k.name}
-                      {k.skill ? <span className={cn('ml-1 text-xs', on ? 'text-wood-100' : 'text-wood-500')}>({k.skill})</span> : null}
+                      {k.skill ? <span className={cn('ml-1 text-xs', on ? 'text-wood-100' : 'text-wood-500')}>({t(k.skill)})</span> : null}
                     </Chip>
                   );
                 })}
               </div>
             ) : (
-              <p className="text-sm text-wood-600">Abhi koi karigar nahi hai. Karigar page se jodein.</p>
+              <p className="text-sm text-wood-600">{t('No workers yet. Add them from the Workers page.')}</p>
             )}
           </Section>
 
-          <Section title="Status page & Notes">
+          <Section title={t('Status page & Notes')}>
             <Toggle
               checked={f.showPriceOnStatus}
               onChange={(v) => set('showPriceOnStatus', v)}
-              label="Grahak ke status page par price / baaki dikhayein"
+              label={t('Show price / balance on the customer status page')}
             />
-            <Field label="Notes">
-              <Textarea value={f.notes} rows={3} onChange={(e) => set('notes', e.target.value)} placeholder="Koi khaas baat..." />
+            <Field label={t('Notes')}>
+              <Textarea value={f.notes} rows={3} onChange={(e) => set('notes', e.target.value)} placeholder={t('Anything special...')} />
             </Field>
           </Section>
         </div>
@@ -694,16 +697,16 @@ export default function OrderForm({ order, initialCustomerId }: { order?: Order;
         <Card className="flex items-center justify-between gap-3 p-3">
           <div className="min-w-0 text-sm">
             <p className="truncate font-semibold text-wood-950">
-              {f.itemType || 'Item'} · {money(total)}
+              {f.itemType ? t(f.itemType) : t('Item')} · {money(total)}
             </p>
-            <p className="truncate text-xs text-wood-600">{uploadMsg || `Baaki ${money(balance)}`}</p>
+            <p className="truncate text-xs text-wood-600">{uploadMsg || t('Balance {amount}', { amount: money(balance) })}</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => router.back()} disabled={saving}>
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button type="submit" loading={saving}>
-              {isEdit ? 'Update' : 'Order Save'}
+              {isEdit ? t('Update order') : t('Save order')}
             </Button>
           </div>
         </Card>

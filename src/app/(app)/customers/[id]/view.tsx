@@ -8,6 +8,7 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { ClipboardList, MapPin, MessageCircle, Pencil, Phone, Plus, Printer, Trash2, Wallet } from 'lucide-react';
 import { useData } from '@/lib/data';
+import { useT } from '@/lib/i18n';
 import { softDelete } from '@/lib/actions';
 import { errMsg, fmtDate, money, PAY_MODE_LABEL, waLink } from '@/lib/utils';
 import {
@@ -25,6 +26,7 @@ import {
 import { CustomerModal, OrderCard, PaymentModal } from '@/components/order-bits';
 
 export default function CustomerDetailPage() {
+  const t = useT();
   const params = { id: useRouteParam('id', 2) };
   const id = params?.id as string;
   const router = useRouter();
@@ -56,28 +58,27 @@ export default function CustomerDetailPage() {
   if (!customer)
     return (
       <EmptyState
-        title="Grahak nahi mila"
-        description="Ho sakta hai yeh delete ho gaya ho."
-        action={<LinkButton href="/customers">Grahak list</LinkButton>}
+        title={t('Customer not found')}
+        description={t('It may have been deleted.')}
+        action={<LinkButton href="/customers">{t('All customers')}</LinkButton>}
       />
     );
 
   const onDelete = async () => {
     const ok = await confirm({
-      title: 'Grahak delete karein?',
-      message: (
-        <>
-          <b>{customer.name}</b> ko list se hata diya jayega. Unke orders aur payments safe rahenge. Settings &gt; Trash se wapas la sakte hain.
-        </>
+      title: t('Delete customer?'),
+      message: t(
+        '{name} will be removed from the list. Their orders and payments stay safe. You can restore it from Settings > Trash.',
+        { name: customer.name },
       ),
       danger: true,
-      confirmText: 'Delete',
+      confirmText: t('Delete'),
     });
     if (!ok) return;
     setDeleting(true);
     try {
       await softDelete('customers', customer.id);
-      toast.success('Grahak delete ho gaya');
+      toast.success(t('Customer deleted'));
       router.replace('/customers');
     } catch (e) {
       toast.error(errMsg(e));
@@ -85,7 +86,10 @@ export default function CustomerDetailPage() {
     }
   };
 
-  const reminder = `Namaste ${customer.name} ji,\n${settings.name} ki taraf se yaad dilana tha ki aapka ${money(stats.due)} baaki hai. Jab suvidha ho, kripya payment kar dein.\nDhanyavaad!`;
+  const reminder = t(
+    'Hello {name},\nThis is a friendly reminder from {workshop} that {amount} is due. Please make the payment when convenient.\nThank you!',
+    { name: customer.name, workshop: settings.name, amount: money(stats.due) },
+  );
   const dueOrders = myOrders.filter((o) => (finance[o.id]?.balance || 0) > 0);
 
   return (
@@ -93,14 +97,14 @@ export default function CustomerDetailPage() {
       <PageHeader
         back="/customers"
         title={customer.name}
-        subtitle={`Grahak since ${fmtDate(customer.createdAt)}`}
+        subtitle={t('Customer since {date}', { date: fmtDate(customer.createdAt) })}
         actions={
           <>
             <Button variant="outline" size="sm" icon={<Pencil className="h-4 w-4" />} onClick={() => setEditOpen(true)}>
-              Edit
+              {t('Edit')}
             </Button>
             <Button variant="ghost" size="sm" icon={<Trash2 className="h-4 w-4" />} onClick={onDelete} loading={deleting} className="text-red-600 hover:bg-red-50">
-              Delete
+              {t('Delete')}
             </Button>
           </>
         }
@@ -126,23 +130,23 @@ export default function CustomerDetailPage() {
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2">
               <LinkButton href={`tel:${customer.phone}`} target="_self" variant="outline" size="sm" icon={<Phone className="h-4 w-4" />}>
-                Call
+                {t('Call')}
               </LinkButton>
               <a
-                href={waLink(customer.phone, `Namaste ${customer.name} ji,`)}
+                href={waLink(customer.phone, t('Hello {name},', { name: customer.name }))}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex h-8 items-center justify-center gap-1.5 rounded-xl bg-[#25D366] px-3 text-sm font-medium text-white hover:brightness-95"
               >
-                <MessageCircle className="h-4 w-4" /> WhatsApp
+                <MessageCircle className="h-4 w-4" /> {t('WhatsApp')}
               </a>
             </div>
             <div className="mt-2 grid grid-cols-2 gap-2">
               <LinkButton href={`/orders/new?customer=${customer.id}`} size="sm" icon={<Plus className="h-4 w-4" />}>
-                Naya Order
+                {t('New Order')}
               </LinkButton>
               <Button size="sm" variant="secondary" icon={<Wallet className="h-4 w-4" />} onClick={() => setPayOpen(true)} disabled={stats.due <= 0}>
-                Payment lein
+                {t('Receive Payment')}
               </Button>
             </div>
             {stats.due > 0 && (
@@ -152,22 +156,22 @@ export default function CustomerDetailPage() {
                 rel="noreferrer"
                 className="mt-2 block text-center text-xs font-medium text-wood-700 underline"
               >
-                WhatsApp par baaki ka reminder bhejein
+                {t('Send payment reminder on WhatsApp')}
               </a>
             )}
           </Card>
 
           <div className="grid grid-cols-2 gap-3">
-            <StatCard label="Orders" value={myOrders.length} />
-            <StatCard label="Total bill" value={money(stats.total)} />
-            <StatCard label="Mila" value={money(stats.paid)} tone="green" />
-            <StatCard label="Baaki" value={money(stats.due)} tone={stats.due > 0 ? 'red' : 'green'} />
+            <StatCard label={t('Orders')} value={myOrders.length} />
+            <StatCard label={t('Total bill')} value={money(stats.total)} />
+            <StatCard label={t('Paid')} value={money(stats.paid)} tone="green" />
+            <StatCard label={t('Due')} value={money(stats.due)} tone={stats.due > 0 ? 'red' : 'green'} />
           </div>
         </div>
 
         <div className="space-y-4 lg:col-span-2">
           <Card>
-            <CardHeader title={`Order history (${myOrders.length})`} />
+            <CardHeader title={t('Order history ({n})', { n: myOrders.length })} />
             <div className="p-3">
               {myOrders.length ? (
                 <div className="grid gap-2.5 sm:grid-cols-2">
@@ -183,12 +187,12 @@ export default function CustomerDetailPage() {
                           f && (
                             <div className="mt-2 flex items-center justify-between border-t border-wood-100 pt-2 text-xs">
                               <span className="text-wood-600">
-                                Total <b className="text-wood-900">{money(f.price - (f.discount || 0))}</b>
+                                {t('Total')} <b className="text-wood-900">{money(f.price - (f.discount || 0))}</b>
                               </span>
                               {f.balance > 0 ? (
-                                <span className="font-semibold text-red-600">Baaki {money(f.balance)}</span>
+                                <span className="font-semibold text-red-600">{t('Due {amount}', { amount: money(f.balance) })}</span>
                               ) : (
-                                <Badge tone="green">Paid</Badge>
+                                <Badge tone="green">{t('Fully paid')}</Badge>
                               )}
                             </div>
                           )
@@ -200,10 +204,10 @@ export default function CustomerDetailPage() {
               ) : (
                 <EmptyState
                   icon={<ClipboardList className="h-6 w-6" />}
-                  title="Koi order nahi"
+                  title={t('No orders yet')}
                   action={
                     <LinkButton href={`/orders/new?customer=${customer.id}`} size="sm" icon={<Plus className="h-4 w-4" />}>
-                      Naya Order
+                      {t('New Order')}
                     </LinkButton>
                   }
                 />
@@ -212,15 +216,15 @@ export default function CustomerDetailPage() {
           </Card>
 
           <Card>
-            <CardHeader title={`Payments (${myPayments.length})`} />
+            <CardHeader title={t('Payments ({n})', { n: myPayments.length })} />
             {myPayments.length ? (
               <ul className="divide-y divide-wood-50">
                 {myPayments.map((p) => (
                   <li key={p.id} className="flex items-center gap-3 px-4 py-3 text-sm">
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-wood-950">
-                        {money(p.amount)} <Badge tone="wood" className="ml-1">{PAY_MODE_LABEL[p.mode] || p.mode}</Badge>
-                        {p.type === 'advance' && <Badge tone="blue" className="ml-1">Advance</Badge>}
+                        {money(p.amount)} <Badge tone="wood" className="ml-1">{t(PAY_MODE_LABEL[p.mode] || p.mode)}</Badge>
+                        {p.type === 'advance' && <Badge tone="blue" className="ml-1">{t('Advance')}</Badge>}
                       </p>
                       <p className="truncate text-xs text-wood-600">
                         {fmtDate(p.date)} · {p.receiptNo} ·{' '}
@@ -231,13 +235,13 @@ export default function CustomerDetailPage() {
                       </p>
                     </div>
                     <LinkButton href={`/print/receipt/${p.id}`} variant="ghost" size="sm" icon={<Printer className="h-4 w-4" />}>
-                      Receipt
+                      {t('Receipt')}
                     </LinkButton>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="px-4 py-6 text-center text-sm text-wood-600">Abhi koi payment nahi</p>
+              <p className="px-4 py-6 text-center text-sm text-wood-600">{t('No payments yet')}</p>
             )}
           </Card>
         </div>

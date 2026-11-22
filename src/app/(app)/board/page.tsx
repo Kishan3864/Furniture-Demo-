@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { ArrowRight, Hammer, LayoutGrid, List } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useData } from '@/lib/data';
+import { useT } from '@/lib/i18n';
 import { setStage } from '@/lib/actions';
 import type { Order } from '@/lib/types';
 import { errMsg } from '@/lib/utils';
@@ -22,6 +23,7 @@ interface Group {
 }
 
 function NextStageButton({ order }: { order: Order }) {
+  const t = useT();
   const { settings } = useData();
   const { user } = useAuth();
   const confirm = useConfirm();
@@ -40,13 +42,17 @@ function NextStageButton({ order }: { order: Order }) {
         e.preventDefault();
         e.stopPropagation();
         if (isLast) {
-          const ok = await confirm({ title: 'Delivered mark karein?', message: `${order.orderNo} delivered ho gaya?`, confirmText: 'Haan, delivered' });
+          const ok = await confirm({
+            title: t('Mark as delivered?'),
+            message: t('Has {no} been delivered?', { no: order.orderNo }),
+            confirmText: t('Yes, delivered'),
+          });
           if (!ok) return;
         }
         setBusy(true);
         try {
           await setStage(order, nextIdx, settings, user?.name);
-          toast.success(`${order.orderNo}: ${next.name}`);
+          toast.success(`${order.orderNo}: ${t(next.name)}`);
         } catch (err) {
           toast.error(errMsg(err));
         } finally {
@@ -54,13 +60,14 @@ function NextStageButton({ order }: { order: Order }) {
         }
       }}
     >
-      Next: {next.name} <ArrowRight className="h-3.5 w-3.5" />
+      {t('Next: {stage}', { stage: t(next.name) })} <ArrowRight className="h-3.5 w-3.5" />
     </Button>
   );
 }
 
 export default function BoardPage() {
   const router = useRouter();
+  const t = useT();
   const { loading, orders, settings, karigars, karigarById } = useData();
   const [groupBy, setGroupBy] = useState<GroupBy>('stage');
   const [view, setView] = useState<View>('board');
@@ -78,7 +85,7 @@ export default function BoardPage() {
     if (groupBy === 'stage') {
       return settings.stages.slice(0, last).map((s, i) => ({
         key: `s${i}`,
-        title: s.name,
+        title: t(s.name),
         orders: active.filter((o) => o.stageIndex === i),
       }));
     }
@@ -86,9 +93,9 @@ export default function BoardPage() {
       .map((k) => ({ key: k.id, title: k.name, orders: active.filter((o) => o.karigarIds?.includes(k.id)) }))
       .filter((g) => g.orders.length || karigarById[g.key]?.active);
     const unassigned = active.filter((o) => !o.karigarIds?.length || o.karigarIds.every((id) => !karigarById[id]));
-    list.push({ key: '__none__', title: 'Bina karigar', orders: unassigned });
+    list.push({ key: '__none__', title: t('No worker'), orders: unassigned });
     return list;
-  }, [groupBy, settings.stages, last, active, karigars, karigarById]);
+  }, [groupBy, settings.stages, last, active, karigars, karigarById, t]);
 
   if (loading) return <PageLoader />;
 
@@ -108,24 +115,24 @@ export default function BoardPage() {
   return (
     <div>
       <PageHeader
-        title="Kaam kahan tak"
-        subtitle={`${active.length} kaam chal rahe hain`}
+        title={t('Work Progress')}
+        subtitle={active.length === 1 ? t('1 job in progress') : t('{n} jobs in progress', { n: active.length })}
         actions={
           <>
             <Segmented
               value={groupBy}
               onChange={setGroupBy}
               options={[
-                { value: 'stage', label: 'Stage' },
-                { value: 'karigar', label: 'Karigar' },
+                { value: 'stage', label: t('Stage') },
+                { value: 'karigar', label: t('Worker') },
               ]}
             />
             <Segmented
               value={view}
               onChange={setView}
               options={[
-                { value: 'board', label: <LayoutGrid className="h-4 w-4" aria-label="Board" /> },
-                { value: 'list', label: <List className="h-4 w-4" aria-label="List" /> },
+                { value: 'board', label: <LayoutGrid className="h-4 w-4" aria-label={t('Board')} /> },
+                { value: 'list', label: <List className="h-4 w-4" aria-label={t('List')} /> },
               ]}
             />
           </>
@@ -135,9 +142,9 @@ export default function BoardPage() {
       {!active.length ? (
         <EmptyState
           icon={<Hammer className="h-6 w-6" />}
-          title="Abhi koi kaam chalu nahi"
-          description="Naya order banate hi yahan dikhega."
-          action={<LinkButton href="/orders/new">Naya Order</LinkButton>}
+          title={t('No jobs in progress')}
+          description={t('New orders will show up here.')}
+          action={<LinkButton href="/orders/new">{t('New Order')}</LinkButton>}
         />
       ) : view === 'board' ? (
         <div className="scrollbar-thin -mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-4">
@@ -151,7 +158,7 @@ export default function BoardPage() {
                 {g.orders.length ? (
                   g.orders.map(card)
                 ) : (
-                  <p className="rounded-xl border border-dashed border-wood-200 p-4 text-center text-xs text-wood-500">Khaali</p>
+                  <p className="rounded-xl border border-dashed border-wood-200 p-4 text-center text-xs text-wood-500">{t('Empty')}</p>
                 )}
               </div>
             </div>

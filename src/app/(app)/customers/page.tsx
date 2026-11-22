@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Download, Plus, Users } from 'lucide-react';
 import { useData } from '@/lib/data';
+import { useT } from '@/lib/i18n';
 import { downloadCSV, money, todayStr } from '@/lib/utils';
 import { Badge, Button, DataTable, EmptyState, PageHeader, PageLoader, SearchInput, Toggle, type Column } from '@/components/ui';
 import { CustomerModal } from '@/components/order-bits';
@@ -17,6 +18,7 @@ interface Row extends Customer {
 }
 
 export default function CustomersPage() {
+  const t = useT();
   const { loading, customers, orders, finance } = useData();
   const router = useRouter();
   const [q, setQ] = useState('');
@@ -57,7 +59,7 @@ export default function CustomersPage() {
   const columns: Column<Row>[] = [
     {
       key: 'name',
-      header: 'Naam',
+      header: t('Name'),
       cell: (r) => (
         <div className="min-w-0">
           <p className="truncate font-semibold text-wood-950">{r.name}</p>
@@ -65,21 +67,21 @@ export default function CustomersPage() {
         </div>
       ),
     },
-    { key: 'phone', header: 'Phone', cell: (r) => r.phone },
-    { key: 'orders', header: 'Orders', align: 'center', cell: (r) => r.orderCount },
-    { key: 'total', header: 'Total', align: 'right', cell: (r) => money(r.total) },
-    { key: 'paid', header: 'Mila', align: 'right', cell: (r) => <span className="text-emerald-700">{money(r.paid)}</span> },
+    { key: 'phone', header: t('Phone'), cell: (r) => r.phone },
+    { key: 'orders', header: t('Orders'), align: 'center', cell: (r) => r.orderCount },
+    { key: 'total', header: t('Total'), align: 'right', cell: (r) => money(r.total) },
+    { key: 'paid', header: t('Paid'), align: 'right', cell: (r) => <span className="text-emerald-700">{money(r.paid)}</span> },
     {
       key: 'due',
-      header: 'Baaki',
+      header: t('Due'),
       align: 'right',
-      cell: (r) => (r.due > 0 ? <span className="font-semibold text-red-600">{money(r.due)}</span> : <Badge tone="green">Clear</Badge>),
+      cell: (r) => (r.due > 0 ? <span className="font-semibold text-red-600">{money(r.due)}</span> : <Badge tone="green">{t('Clear')}</Badge>),
     },
   ];
 
   const exportCSV = () => {
-    downloadCSV(`grahak-${todayStr()}.csv`, [
-      ['Naam', 'Phone', 'Address', 'Notes', 'Orders', 'Total', 'Mila', 'Baaki'],
+    downloadCSV(`customers-${todayStr()}.csv`, [
+      [t('Name'), t('Phone'), t('Address'), t('Notes'), t('Orders'), t('Total'), t('Paid'), t('Due')],
       ...filtered.map((r) => [r.name, r.phone, r.address || '', r.notes || '', r.orderCount, r.total, r.paid, r.due]),
     ]);
   };
@@ -89,23 +91,27 @@ export default function CustomersPage() {
   return (
     <div>
       <PageHeader
-        title="Grahak"
-        subtitle={`${customers.length} grahak${totalDue > 0 ? ` · Baaki ${money(totalDue)}` : ''}`}
+        title={t('Customers')}
+        subtitle={
+          totalDue > 0
+            ? t('{n} customers · Due {amount}', { n: customers.length, amount: money(totalDue) })
+            : t('{n} customers', { n: customers.length })
+        }
         actions={
           <>
             <Button variant="outline" icon={<Download className="h-4 w-4" />} onClick={exportCSV} disabled={!filtered.length}>
-              CSV
+              {t('CSV')}
             </Button>
             <Button icon={<Plus className="h-4 w-4" />} onClick={() => setOpen(true)}>
-              Naya Grahak
+              {t('Add Customer')}
             </Button>
           </>
         }
       />
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <SearchInput value={q} onChange={setQ} placeholder="Naam ya phone se dhoondein..." className="flex-1" />
-        <Toggle checked={onlyDue} onChange={setOnlyDue} label="Sirf baaki wale" />
+        <SearchInput value={q} onChange={setQ} placeholder={t('Search by name or phone...')} className="flex-1" />
+        <Toggle checked={onlyDue} onChange={setOnlyDue} label={t('Only with dues')} />
       </div>
 
       <DataTable
@@ -116,12 +122,12 @@ export default function CustomersPage() {
         empty={
           <EmptyState
             icon={<Users className="h-6 w-6" />}
-            title={customers.length ? 'Koi grahak nahi mila' : 'Abhi koi grahak nahi hai'}
-            description={customers.length ? 'Search ya filter badal kar dekhein' : 'Pehla grahak jodein ya naya order banayein'}
+            title={customers.length ? t('No customers found') : t('No customers yet')}
+            description={customers.length ? t('Try a different search or filter') : t('Add your first customer or create a new order')}
             action={
               !customers.length && (
                 <Button icon={<Plus className="h-4 w-4" />} onClick={() => setOpen(true)}>
-                  Naya Grahak
+                  {t('Add Customer')}
                 </Button>
               )
             }

@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from 'clsx';
 import { differenceInCalendarDays, format, parseISO, isValid } from 'date-fns';
 import type { LengthUnit, Naap, StageDef } from './types';
+import { tr } from './i18n';
 
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
@@ -146,23 +147,26 @@ export const PAY_MODE_LABEL: Record<string, string> = {
   bank: 'Bank',
 };
 
+/** User-friendly (translated) message for Firebase / app errors. */
 export function errMsg(e: unknown): string {
   if (e && typeof e === 'object' && 'code' in e) {
     const code = String((e as { code: string }).code);
     const map: Record<string, string> = {
-      'auth/invalid-credential': 'Email ya password galat hai',
-      'auth/wrong-password': 'Password galat hai',
-      'auth/user-not-found': 'Account nahi mila',
-      'auth/email-already-in-use': 'Yeh email pehle se use ho raha hai',
-      'auth/weak-password': 'Password kam se kam 6 character ka ho',
-      'auth/invalid-email': 'Email sahi nahi hai',
-      'auth/too-many-requests': 'Bahut zyada try kiya, thodi der baad koshish karein',
-      'auth/network-request-failed': 'Internet connection check karein',
-      'permission-denied': 'Permission nahi hai',
-      unavailable: 'Offline hai - internet aate hi sync hoga',
+      'auth/invalid-credential': 'Wrong email or password',
+      'auth/invalid-login-credentials': 'Wrong email or password',
+      'auth/wrong-password': 'Wrong password',
+      'auth/user-not-found': 'Account not found',
+      'auth/email-already-in-use': 'This email is already in use',
+      'auth/weak-password': 'Password must be at least 6 characters',
+      'auth/invalid-email': 'Invalid email',
+      'auth/too-many-requests': 'Too many attempts, please try again later',
+      'auth/network-request-failed': 'Check your internet connection',
+      'auth/requires-recent-login': 'Please sign in again and retry',
+      'permission-denied': 'You do not have permission',
+      unavailable: 'You are offline - it will sync when internet is back',
     };
-    if (map[code]) return map[code];
+    if (map[code]) return tr(map[code]);
   }
-  if (e instanceof Error) return e.message;
-  return 'Kuch galat ho gaya';
+  if (e instanceof Error) return tr(e.message);
+  return tr('Something went wrong');
 }

@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import { Hammer, MapPin } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useData } from '@/lib/data';
+import { useT } from '@/lib/i18n';
 import {
   Card,
   CardHeader,
@@ -22,6 +23,7 @@ import { JobSpecs, ProgressPhotos, StageBadge, StageStepper, isDelivered } from 
 
 /** Karigar job view - deliberately shows no prices or payments. */
 export default function JobDetailPage() {
+  const t = useT();
   const id = useRouteParam('id', 2);
   const router = useRouter();
   const { isOwner } = useAuth();
@@ -37,9 +39,9 @@ export default function JobDetailPage() {
     return (
       <EmptyState
         icon={<Hammer className="h-6 w-6" />}
-        title="Kaam nahi mila"
-        description="Yeh kaam aapko assign nahi hai ya hata diya gaya hai."
-        action={<LinkButton href="/jobs">Mera Kaam</LinkButton>}
+        title={t('Job not found')}
+        description={t('This job is not assigned to you or has been removed.')}
+        action={<LinkButton href="/jobs">{t('My Jobs')}</LinkButton>}
       />
     );
 
@@ -49,7 +51,7 @@ export default function JobDetailPage() {
     <div>
       <PageHeader
         back="/jobs"
-        title={`${order.orderNo} · ${order.itemType}${order.quantity > 1 ? ` x${order.quantity}` : ''}`}
+        title={`${order.orderNo} · ${t(order.itemType)}${order.quantity > 1 ? ` x${order.quantity}` : ''}`}
         subtitle={order.title || order.customerName}
       />
       <Card className="mb-4 p-4">
@@ -71,23 +73,23 @@ export default function JobDetailPage() {
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
           <Card>
-            <CardHeader title="Kaam ki details" />
+            <CardHeader title={t('Job details')} />
             <div className="p-4">
               <JobSpecs order={order} />
             </div>
           </Card>
           <Card>
-            <CardHeader title={`Design photos (${order.designPhotos?.length || 0})`} />
+            <CardHeader title={t('Design photos ({n})', { n: order.designPhotos?.length || 0 })} />
             <div className="p-4">
               {order.designPhotos?.length ? (
                 <PhotoGrid photos={order.designPhotos} />
               ) : (
-                <p className="text-sm text-wood-600">Koi design photo nahi</p>
+                <p className="text-sm text-wood-600">{t('No design photos')}</p>
               )}
             </div>
           </Card>
           <Card>
-            <CardHeader title="Progress photos" />
+            <CardHeader title={t('Progress photos')} />
             <div className="p-4">
               <ProgressPhotos order={order} canDelete={false} />
             </div>
@@ -95,7 +97,7 @@ export default function JobDetailPage() {
         </div>
         <div>
           <Card>
-            <CardHeader title="Stage update karein" />
+            <CardHeader title={t('Update stage')} />
             <div className="p-4">
               <StageStepper order={order} editable />
             </div>

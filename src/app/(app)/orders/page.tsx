@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { ClipboardList, Download, Funnel, Plus } from 'lucide-react';
 import { useData } from '@/lib/data';
+import { useT } from '@/lib/i18n';
 import type { Order } from '@/lib/types';
 import { cn, downloadCSV, fmtDate, money, PRIORITY_LABEL, todayStr } from '@/lib/utils';
 import {
@@ -30,6 +31,7 @@ type Sort = 'delivery' | 'newest';
 
 export default function OrdersPage() {
   const router = useRouter();
+  const t = useT();
   const { loading, orders, finance, settings, karigars } = useData();
   const names = useKarigarNames();
   const [q, setQ] = useState('');
@@ -81,7 +83,7 @@ export default function OrdersPage() {
 
   const exportCSV = () => {
     const rows: (string | number)[][] = [
-      ['Order No', 'Order Date', 'Grahak', 'Phone', 'Item', 'Qty', 'Title', 'Stage', 'Progress %', 'Delivery Date', 'Karigar', 'Priority', 'Total', 'Paid', 'Balance'],
+      ['Order No', 'Order Date', 'Customer', 'Phone', 'Item', 'Qty', 'Title', 'Stage', 'Progress %', 'Delivery Date', 'Workers', 'Priority', 'Total', 'Paid', 'Balance'].map((h) => t(h)),
       ...filtered.map((o) => {
         const f = finance[o.id];
         return [
@@ -89,14 +91,14 @@ export default function OrdersPage() {
           o.orderDate,
           o.customerName,
           o.customerPhone,
-          o.itemType,
+          t(o.itemType),
           o.quantity,
           o.title || '',
-          o.stage,
+          t(o.stage),
           o.progress,
           o.deliveryDate,
           names(o.karigarIds),
-          PRIORITY_LABEL[o.priority] || o.priority,
+          t(PRIORITY_LABEL[o.priority] || o.priority),
           f ? f.price - (f.discount || 0) : 0,
           f?.paid || 0,
           f?.balance || 0,
@@ -109,7 +111,7 @@ export default function OrdersPage() {
   const columns: Column<Order>[] = [
     {
       key: 'no',
-      header: 'Order',
+      header: t('Order'),
       cell: (o) => (
         <div>
           <p className="font-semibold text-wood-950">{o.orderNo}</p>
@@ -119,11 +121,11 @@ export default function OrdersPage() {
     },
     {
       key: 'item',
-      header: 'Item',
+      header: t('Item'),
       cell: (o) => (
         <div className="min-w-0">
           <p className="font-medium">
-            {o.itemType}
+            {t(o.itemType)}
             {o.quantity > 1 ? ` x${o.quantity}` : ''} <PriorityBadge priority={o.priority} />
           </p>
           {o.title && <p className="max-w-[200px] truncate text-xs text-wood-600">{o.title}</p>}
@@ -132,7 +134,7 @@ export default function OrdersPage() {
     },
     {
       key: 'cust',
-      header: 'Grahak',
+      header: t('Customer'),
       cell: (o) => (
         <div>
           <p className="font-medium">{o.customerName}</p>
@@ -142,18 +144,18 @@ export default function OrdersPage() {
     },
     {
       key: 'stage',
-      header: 'Stage',
+      header: t('Stage'),
       className: 'min-w-[150px]',
       cell: (o) => (
         <div>
-          <p className="text-xs font-medium text-wood-800">{o.stage}</p>
+          <p className="text-xs font-medium text-wood-800">{t(o.stage)}</p>
           <ProgressBar value={o.progress} className="mt-1" showLabel />
         </div>
       ),
     },
     {
       key: 'delivery',
-      header: 'Delivery',
+      header: t('Delivery'),
       cell: (o) => (
         <div className="space-y-1">
           <p className="text-xs text-wood-700">{fmtDate(o.deliveryDate, 'dd MMM yy')}</p>
@@ -163,7 +165,7 @@ export default function OrdersPage() {
     },
     {
       key: 'money',
-      header: 'Total / Baaki',
+      header: t('Total / Balance'),
       align: 'right',
       cell: (o) => {
         const f = finance[o.id];
@@ -172,7 +174,7 @@ export default function OrdersPage() {
           <div>
             <p className="font-medium">{money(f.price - (f.discount || 0))}</p>
             <p className={cn('text-xs font-semibold', f.balance > 0 ? 'text-red-600' : 'text-emerald-700')}>
-              {f.balance > 0 ? `Baaki ${money(f.balance)}` : 'Poora mila'}
+              {f.balance > 0 ? t('Due {amount}', { amount: money(f.balance) }) : t('Fully paid')}
             </p>
           </div>
         );
@@ -185,15 +187,15 @@ export default function OrdersPage() {
   return (
     <div>
       <PageHeader
-        title="Orders"
-        subtitle={`${filtered.length} order${filtered.length === 1 ? '' : 's'}`}
+        title={t('Orders')}
+        subtitle={filtered.length === 1 ? t('1 order') : t('{n} orders', { n: filtered.length })}
         actions={
           <>
             <Button variant="outline" icon={<Download className="h-4 w-4" />} onClick={exportCSV} disabled={!filtered.length}>
-              CSV
+              {t('CSV')}
             </Button>
             <LinkButton href="/orders/new" icon={<Plus className="h-4 w-4" />}>
-              Naya Order
+              {t('New Order')}
             </LinkButton>
           </>
         }
@@ -201,18 +203,18 @@ export default function OrdersPage() {
 
       <div className="mb-4 space-y-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <SearchInput value={q} onChange={setQ} placeholder="Order no, grahak, phone, item..." className="flex-1" />
+          <SearchInput value={q} onChange={setQ} placeholder={t('Order no, customer, phone, item...')} className="flex-1" />
           <div className="flex items-center gap-2">
             <Select value={sort} onChange={(e) => setSort(e.target.value as Sort)} className="w-auto">
-              <option value="delivery">Delivery date se</option>
-              <option value="newest">Naye pehle</option>
+              <option value="delivery">{t('By delivery date')}</option>
+              <option value="newest">{t('Newest first')}</option>
             </Select>
             <Button
               variant={showFilters || activeFilterCount ? 'secondary' : 'outline'}
               icon={<Funnel className="h-4 w-4" />}
               onClick={() => setShowFilters((v) => !v)}
             >
-              Filters{activeFilterCount ? ` (${activeFilterCount})` : ''}
+              {activeFilterCount ? t('Filters ({n})', { n: activeFilterCount }) : t('Filters')}
             </Button>
           </div>
         </div>
@@ -221,39 +223,39 @@ export default function OrdersPage() {
             value={status}
             onChange={setStatus}
             options={[
-              { value: 'active', label: 'Chalu' },
-              { value: 'ready', label: 'Ready' },
-              { value: 'delivered', label: 'Delivered' },
-              { value: 'all', label: 'Sab' },
+              { value: 'active', label: t('Active') },
+              { value: 'ready', label: t('Ready') },
+              { value: 'delivered', label: t('Delivered') },
+              { value: 'all', label: t('All') },
             ]}
           />
         </div>
         {showFilters && (
           <div className="grid grid-cols-2 gap-2 rounded-2xl border border-wood-100 bg-white p-3 sm:grid-cols-4">
-            <Select value={stage} onChange={(e) => setStage(e.target.value)} placeholder="Sab stage">
+            <Select value={stage} onChange={(e) => setStage(e.target.value)} placeholder={t('All stages')}>
               {settings.stages.map((s, i) => (
                 <option key={s.name + i} value={String(i)}>
-                  {s.name}
+                  {t(s.name)}
                 </option>
               ))}
             </Select>
-            <Select value={item} onChange={(e) => setItem(e.target.value)} placeholder="Sab item" options={settings.itemTypes} />
-            <Select value={karigar} onChange={(e) => setKarigar(e.target.value)} placeholder="Sab karigar">
-              <option value="__none__">Bina karigar</option>
+            <Select value={item} onChange={(e) => setItem(e.target.value)} placeholder={t('All items')} options={settings.itemTypes.map((it) => ({ value: it, label: t(it) }))} />
+            <Select value={karigar} onChange={(e) => setKarigar(e.target.value)} placeholder={t('All workers')}>
+              <option value="__none__">{t('No worker')}</option>
               {karigars.map((k) => (
                 <option key={k.id} value={k.id}>
                   {k.name}
                 </option>
               ))}
             </Select>
-            <Select value={priority} onChange={(e) => setPriority(e.target.value)} placeholder="Sab priority">
-              <option value="urgent">Urgent</option>
-              <option value="high">High</option>
-              <option value="normal">Normal</option>
-              <option value="low">Low</option>
+            <Select value={priority} onChange={(e) => setPriority(e.target.value)} placeholder={t('All priorities')}>
+              <option value="urgent">{t('Urgent')}</option>
+              <option value="high">{t('High')}</option>
+              <option value="normal">{t('Normal')}</option>
+              <option value="low">{t('Low')}</option>
             </Select>
             <div className="col-span-2 flex items-center justify-between gap-2 sm:col-span-4">
-              <Toggle checked={dueOnly} onChange={setDueOnly} label="Sirf baaki wale" />
+              <Toggle checked={dueOnly} onChange={setDueOnly} label={t('Only with balance due')} />
               {activeFilterCount > 0 && (
                 <Button
                   variant="ghost"
@@ -266,7 +268,7 @@ export default function OrdersPage() {
                     setDueOnly(false);
                   }}
                 >
-                  Filters hatayein
+                  {t('Clear filters')}
                 </Button>
               )}
             </div>
@@ -291,11 +293,11 @@ export default function OrdersPage() {
               extra={
                 f ? (
                   <div className="mt-2 flex items-center justify-between border-t border-wood-50 pt-2 text-xs">
-                    <span className="text-wood-600">Total {money(f.price - (f.discount || 0))}</span>
+                    <span className="text-wood-600">{t('Total {amount}', { amount: money(f.price - (f.discount || 0)) })}</span>
                     {f.balance > 0 ? (
-                      <Badge tone="red">Baaki {money(f.balance)}</Badge>
+                      <Badge tone="red">{t('Due {amount}', { amount: money(f.balance) })}</Badge>
                     ) : (
-                      <Badge tone="green">Poora mila</Badge>
+                      <Badge tone="green">{t('Fully paid')}</Badge>
                     )}
                   </div>
                 ) : null
@@ -306,12 +308,12 @@ export default function OrdersPage() {
         empty={
           <EmptyState
             icon={<ClipboardList className="h-6 w-6" />}
-            title={orders.length ? 'Is filter mein koi order nahi' : 'Abhi koi order nahi hai'}
-            description={orders.length ? 'Filter ya search badal kar dekhein.' : 'Pehla order banayein - naap, design aur advance ek saath.'}
+            title={orders.length ? t('No orders match this filter') : t('No orders yet')}
+            description={orders.length ? t('Try changing the filter or search.') : t('Create your first order - measurements, design and advance in one place.')}
             action={
               !orders.length ? (
                 <LinkButton href="/orders/new" icon={<Plus className="h-4 w-4" />}>
-                  Naya Order
+                  {t('New Order')}
                 </LinkButton>
               ) : undefined
             }

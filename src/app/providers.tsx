@@ -3,6 +3,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import { AuthProvider } from '@/lib/auth';
+import { LanguageProvider } from '@/lib/i18n';
 import { DataProvider } from '@/lib/data';
 import { ConfirmProvider } from '@/components/ui';
 
@@ -16,6 +17,7 @@ export default function Providers({ children }: { children: ReactNode }) {
   }, []);
 
   return (
+    <LanguageProvider>
     <AuthProvider>
       <DataProvider>
         <ConfirmProvider>
@@ -29,5 +31,6 @@ export default function Providers({ children }: { children: ReactNode }) {
         </ConfirmProvider>
       </DataProvider>
     </AuthProvider>
+    </LanguageProvider>
   );
 }

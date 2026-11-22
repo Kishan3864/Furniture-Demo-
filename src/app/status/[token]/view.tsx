@@ -10,12 +10,15 @@ import type { StatusDoc } from '@/lib/types';
 import { cn, daysLeft, fmtDate, fmtDateTime, money } from '@/lib/utils';
 import { PageLoader, PhotoGrid, ProgressBar } from '@/components/ui';
 import { StoredImg } from '@/components/stored-image';
+import { LanguageSwitch } from '@/components/language-switch';
+import { useT } from '@/lib/i18n';
 
 export default function StatusPage() {
   const params = { token: useRouteParam('token', 2) };
   const token = params?.token;
   const [data, setData] = useState<StatusDoc | null>(null);
   const [state, setState] = useState<'loading' | 'ok' | 'missing' | 'error'>('loading');
+  const t = useT();
 
   useEffect(() => {
     if (!firebaseConfigured) {
@@ -39,9 +42,9 @@ export default function StatusPage() {
     return (
       <div className="flex min-h-screen items-center justify-center p-6 text-center">
         <div>
-          <p className="text-lg font-bold text-wood-950">Status link nahi mila</p>
+          <p className="text-lg font-bold text-wood-950">{t('Status link not found')}</p>
           <p className="mt-1 text-sm text-wood-600">
-            {state === 'error' ? 'Internet check karke dobara try karein.' : 'Yeh link purana ya galat ho sakta hai. Workshop se naya link maangein.'}
+            {state === 'error' ? t('Please check your internet and try again.') : t('This link may be old or wrong. Please ask the workshop for a new link.')}
           </p>
         </div>
       </div>
@@ -54,6 +57,9 @@ export default function StatusPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-wood-100 to-cream-100">
       <div className="mx-auto max-w-lg px-4 py-6">
+        <div className="mb-3 flex justify-end">
+          <LanguageSwitch />
+        </div>
         <header className="mb-5 flex items-center gap-3">
           {data.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -74,18 +80,18 @@ export default function StatusPage() {
         </header>
 
         <section className="rounded-3xl border border-wood-100 bg-white p-5 shadow-soft">
-          <p className="text-sm text-wood-600">Namaste {data.customerName} ji</p>
+          <p className="text-sm text-wood-600">{t('Hello {name}', { name: data.customerName })}</p>
           <h1 className="mt-1 text-2xl font-bold text-wood-950">
-            {data.itemType}
+            {t(data.itemType)}
             {data.quantity > 1 ? ` x${data.quantity}` : ''}
           </h1>
           {data.title && <p className="text-wood-700">{data.title}</p>}
-          <p className="mt-1 text-xs text-wood-500">Order {data.orderNo}</p>
+          <p className="mt-1 text-xs text-wood-500">{t('Order {no}', { no: data.orderNo })}</p>
 
           <div className="mt-5 flex items-end justify-between">
             <div>
-              <p className="text-xs uppercase tracking-wide text-wood-500">Abhi ka kaam</p>
-              <p className={cn('text-xl font-bold', delivered ? 'text-emerald-700' : 'text-wood-800')}>{data.stage}</p>
+              <p className="text-xs uppercase tracking-wide text-wood-500">{t('Current stage')}</p>
+              <p className={cn('text-xl font-bold', delivered ? 'text-emerald-700' : 'text-wood-800')}>{t(data.stage)}</p>
             </div>
             <p className="text-3xl font-extrabold text-wood-900">{data.progress}%</p>
           </div>
@@ -94,17 +100,17 @@ export default function StatusPage() {
           <div className="mt-5 flex items-center gap-3 rounded-2xl bg-wood-50 p-3">
             <CalendarDays className="h-5 w-5 text-wood-600" />
             <div className="flex-1">
-              <p className="text-xs text-wood-600">{delivered ? 'Delivered' : 'Delivery date'}</p>
+              <p className="text-xs text-wood-600">{delivered ? t('Delivered') : t('Delivery date')}</p>
               <p className="font-semibold text-wood-950">{fmtDate(data.deliveryDate, 'EEEE, dd MMM yyyy')}</p>
             </div>
             {!delivered && d !== null && d >= 0 && (
-              <span className="rounded-full bg-wood-700 px-3 py-1 text-xs font-bold text-white">{d === 0 ? 'Aaj' : `${d} DIN`}</span>
+              <span className="rounded-full bg-wood-700 px-3 py-1 text-xs font-bold text-white">{d === 0 ? t('Today') : t('{n} DAYS', { n: d })}</span>
             )}
           </div>
         </section>
 
         <section className="mt-4 rounded-3xl border border-wood-100 bg-white p-5 shadow-soft">
-          <h2 className="mb-3 font-semibold text-wood-950">Kaam ki progress</h2>
+          <h2 className="mb-3 font-semibold text-wood-950">{t('Work progress')}</h2>
           <ol className="relative space-y-3 border-l-2 border-wood-100 pl-5">
             {data.stages.map((s, i) => {
               const done = i < data.stageIndex || delivered;
@@ -120,8 +126,8 @@ export default function StatusPage() {
                     {done && <Check className="h-3 w-3" />}
                   </span>
                   <p className={cn('text-sm', current ? 'font-bold text-wood-950' : done ? 'text-wood-800' : 'text-wood-400')}>
-                    {s.name}
-                    {current && <span className="ml-2 rounded-full bg-wood-100 px-2 py-0.5 text-[10px] font-semibold text-wood-800">ABHI</span>}
+                    {t(s.name)}
+                    {current && <span className="ml-2 rounded-full bg-wood-100 px-2 py-0.5 text-[10px] font-semibold text-wood-800">{t('NOW')}</span>}
                   </p>
                 </li>
               );
@@ -131,7 +137,7 @@ export default function StatusPage() {
 
         {photos.length > 0 && (
           <section className="mt-4 rounded-3xl border border-wood-100 bg-white p-5 shadow-soft">
-            <h2 className="mb-3 font-semibold text-wood-950">Photos ({photos.length})</h2>
+            <h2 className="mb-3 font-semibold text-wood-950">{t('Photos ({n})', { n: photos.length })}</h2>
             <PhotoGrid photos={photos} className="grid-cols-2 sm:grid-cols-3" />
           </section>
         )}
@@ -139,22 +145,22 @@ export default function StatusPage() {
         {data.showPrice && data.price !== null && data.price !== undefined && (
           <section className="mt-4 grid grid-cols-3 gap-2 rounded-3xl border border-wood-100 bg-white p-5 text-center shadow-soft">
             <div>
-              <p className="text-[11px] uppercase text-wood-500">Total</p>
+              <p className="text-[11px] uppercase text-wood-500">{t('Total')}</p>
               <p className="font-bold">{money(data.price)}</p>
             </div>
             <div>
-              <p className="text-[11px] uppercase text-wood-500">Diya</p>
+              <p className="text-[11px] uppercase text-wood-500">{t('Paid')}</p>
               <p className="font-bold text-emerald-700">{money(data.paid)}</p>
             </div>
             <div>
-              <p className="text-[11px] uppercase text-wood-500">Baaki</p>
+              <p className="text-[11px] uppercase text-wood-500">{t('Balance')}</p>
               <p className="font-bold text-red-600">{money(data.balance)}</p>
             </div>
           </section>
         )}
 
         <p className="mt-6 text-center text-xs text-wood-500">
-          Last update: {fmtDateTime(data.updatedAt)} · Powered by WoodBook
+          {t('Last updated: {time}', { time: fmtDateTime(data.updatedAt) })} · Powered by WoodBook
         </p>
       </div>
     </div>

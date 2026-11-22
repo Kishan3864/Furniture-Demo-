@@ -3,6 +3,7 @@
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { collection, deleteDoc, doc, setDoc } from 'firebase/firestore';
 import { db, storage } from './firebase';
+import { tr } from './i18n';
 import type { Photo } from './types';
 
 /**
@@ -36,7 +37,7 @@ async function uploadToFirestore(path: string, file: File, opts?: { by?: string;
     side = Math.round(side * 0.75);
     quality = Math.max(0.45, quality - 0.08);
   }
-  if (data.length >= FS_MAX_CHARS) throw new Error('Photo bahut badi hai, chhoti photo chunein');
+  if (data.length >= FS_MAX_CHARS) throw new Error(tr('Photo is too large, choose a smaller one'));
   const r = doc(collection(db(), 'images'));
   await setDoc(r, { data, path, by: opts?.by || '', createdAt: Date.now() });
   const id = `${FS_IMAGE_PREFIX}${r.id}`;
@@ -68,7 +69,7 @@ async function loadBitmap(file: Blob): Promise<ImageBitmap | HTMLImageElement> {
 
 /** Resize to max side and re-encode as JPEG. Returns original if compression does not help. */
 export async function compressImage(file: File, maxSide = 1600, quality = 0.72, forceJpeg = false): Promise<Blob> {
-  if (!file.type.startsWith('image/')) throw new Error('Sirf photo (image) file chunein');
+  if (!file.type.startsWith('image/')) throw new Error(tr('Please choose an image file'));
   if (!forceJpeg && (file.type === 'image/gif' || file.type === 'image/svg+xml')) return file;
   try {
     const img = await loadBitmap(file);

@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Download, MessageCircle, Printer, Trash2, Wallet } from 'lucide-react';
 import { useData } from '@/lib/data';
+import { useT } from '@/lib/i18n';
 import { deletePayment } from '@/lib/actions';
 import { downloadCSV, errMsg, fmtDate, money, PAY_MODE_LABEL, todayStr, waLink } from '@/lib/utils';
 import type { Order, Payment } from '@/lib/types';
@@ -30,6 +31,7 @@ import { PaymentModal } from '@/components/order-bits';
 type Tab = 'payments' | 'dues';
 
 export default function PaymentsPage() {
+  const t = useT();
   const { loading, payments, orders, finance, orderById, settings } = useData();
   const confirm = useConfirm();
   const [tab, setTab] = useState<Tab>('payments');
@@ -56,12 +58,12 @@ export default function PaymentsPage() {
   }, [payments, allTime, month, mode, q]);
 
   const totals = useMemo(() => {
-    const t = { all: 0, cash: 0, upi: 0, bank: 0 } as Record<string, number>;
+    const acc = { all: 0, cash: 0, upi: 0, bank: 0 } as Record<string, number>;
     for (const p of filtered) {
-      t.all += p.amount;
-      t[p.mode] = (t[p.mode] || 0) + p.amount;
+      acc.all += p.amount;
+      acc[p.mode] = (acc[p.mode] || 0) + p.amount;
     }
-    return t;
+    return acc;
   }, [filtered]);
 
   const dues = useMemo(() => {
@@ -79,21 +81,23 @@ export default function PaymentsPage() {
   }, [orders, finance, q]);
   const totalDue = dues.reduce((a, o) => a + (finance[o.id]?.balance || 0), 0);
 
+  const modeLabel = (m: string) => t(PAY_MODE_LABEL[m] || m);
+
   const onDelete = async (p: Payment) => {
     const ok = await confirm({
-      title: 'Payment delete karein?',
-      message: (
-        <>
-          {p.receiptNo} · {money(p.amount)} ({p.customerName}) delete hoga aur order ka baaki wapas badh jayega.
-        </>
-      ),
+      title: t('Delete payment?'),
+      message: t('{receipt} · {amount} ({customer}) will be deleted and the order balance will go back up.', {
+        receipt: p.receiptNo,
+        amount: money(p.amount),
+        customer: p.customerName,
+      }),
       danger: true,
-      confirmText: 'Delete',
+      confirmText: t('Delete'),
     });
     if (!ok) return;
     try {
       await deletePayment(p, orderById[p.orderId]);
-      toast.success('Payment delete ho gaya');
+      toast.success(t('Payment deleted'));
     } catch (e) {
       toast.error(errMsg(e));
     }
@@ -106,20 +110,32 @@ export default function PaymentsPage() {
 
   const reminderText = (o: Order) => {
     const bal = finance[o.id]?.balance || 0;
-    return `Namaste ${o.customerName} ji,\n${settings.name} ki taraf se vinamra yaad dilana tha ki aapke order ${o.orderNo} (${o.itemType}) ka ${money(bal)} baaki hai. Jab suvidha ho, kripya payment kar dein.\nDhanyavaad!`;
+    return t(
+      'Hello {name},\nThis is a friendly reminder from {workshop} that {amount} is due on your order {orderNo} ({item}). Please make the payment when convenient.\nThank you!',
+      { name: o.customerName, workshop: settings.name, orderNo: o.orderNo, item: t(o.itemType), amount: money(bal) },
+    );
   };
 
   const exportCSV = () => {
     downloadCSV(`payments-${allTime ? 'all' : month}.csv`, [
-      ['Date', 'Receipt', 'Order', 'Grahak', 'Mode', 'Type', 'Amount', 'Note'],
-      ...filtered.map((p) => [p.date, p.receiptNo, p.orderNo, p.customerName, PAY_MODE_LABEL[p.mode] || p.mode, p.type, p.amount, p.note || '']),
+      [t('Date'), t('Receipt'), t('Order'), t('Customer'), t('Mode'), t('Type'), t('Amount'), t('Note')],
+      ...filtered.map((p) => [
+        p.date,
+        p.receiptNo,
+        p.orderNo,
+        p.customerName,
+        modeLabel(p.mode),
+        p.type === 'advance' ? t('Advance') : t('Instalment'),
+        p.amount,
+        p.note || '',
+      ]),
     ]);
   };
 
   const payColumns: Column<Payment>[] = [
     {
       key: 'amount-title',
-      header: 'Grahak',
+      header: t('Customer'),
       cell: (p) => (
         <div className="flex items-center justify-between gap-2">
           <span className="truncate">{p.customerName}</span>
@@ -127,11 +143,11 @@ export default function PaymentsPage() {
         </div>
       ),
     },
-    { key: 'date', header: 'Date', cell: (p) => fmtDate(p.date) },
-    { key: 'receipt', header: 'Receipt', cell: (p) => <span className="font-medium">{p.receiptNo}</span> },
+    { key: 'date', header: t('Date'), cell: (p) => fmtDate(p.date) },
+    { key: 'receipt', header: t('Receipt'), cell: (p) => <span className="font-medium">{p.receiptNo}</span> },
     {
       key: 'order',
-      header: 'Order',
+      header: t('Order'),
       cell: (p) => (
         <Link href={`/orders/${p.orderId}`} className="font-medium text-wood-700 underline">
           {p.orderNo}
@@ -140,15 +156,15 @@ export default function PaymentsPage() {
     },
     {
       key: 'mode',
-      header: 'Mode',
+      header: t('Mode'),
       cell: (p) => (
         <span className="inline-flex gap-1">
-          <Badge tone={p.mode === 'cash' ? 'green' : p.mode === 'upi' ? 'purple' : 'blue'}>{PAY_MODE_LABEL[p.mode] || p.mode}</Badge>
-          {p.type === 'advance' && <Badge tone="wood">Adv</Badge>}
+          <Badge tone={p.mode === 'cash' ? 'green' : p.mode === 'upi' ? 'purple' : 'blue'}>{modeLabel(p.mode)}</Badge>
+          {p.type === 'advance' && <Badge tone="wood">{t('Adv')}</Badge>}
         </span>
       ),
     },
-    { key: 'amount', header: 'Amount', align: 'right', hideOnMobile: true, cell: (p) => <span className="font-semibold">{money(p.amount)}</span> },
+    { key: 'amount', header: t('Amount'), align: 'right', hideOnMobile: true, cell: (p) => <span className="font-semibold">{money(p.amount)}</span> },
     {
       key: 'actions',
       header: '',
@@ -156,9 +172,9 @@ export default function PaymentsPage() {
       cell: (p) => (
         <div className="flex justify-end gap-1">
           <LinkButton href={`/print/receipt/${p.id}`} variant="ghost" size="sm" icon={<Printer className="h-4 w-4" />}>
-            Receipt
+            {t('Receipt')}
           </LinkButton>
-          <Button variant="ghost" size="icon" onClick={() => onDelete(p)} aria-label="Delete" className="text-red-600 hover:bg-red-50">
+          <Button variant="ghost" size="icon" onClick={() => onDelete(p)} aria-label={t('Delete')} className="text-red-600 hover:bg-red-50">
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
@@ -169,7 +185,7 @@ export default function PaymentsPage() {
   const dueColumns: Column<Order>[] = [
     {
       key: 'cust',
-      header: 'Grahak',
+      header: t('Customer'),
       cell: (o) => (
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
@@ -182,22 +198,22 @@ export default function PaymentsPage() {
     },
     {
       key: 'order',
-      header: 'Order',
+      header: t('Order'),
       cell: (o) => (
         <Link href={`/orders/${o.id}`} className="font-medium text-wood-700 underline">
-          {o.orderNo} · {o.itemType}
+          {o.orderNo} · {t(o.itemType)}
         </Link>
       ),
     },
-    { key: 'stage', header: 'Stage', cell: (o) => <span className="text-wood-800">{o.stage}</span> },
+    { key: 'stage', header: t('Stage'), cell: (o) => <span className="text-wood-800">{t(o.stage)}</span> },
     {
       key: 'delivery',
-      header: 'Delivery',
+      header: t('Delivery'),
       cell: (o) => <DeliveryBadge date={o.deliveryDate} delivered={o.stageIndex >= settings.stages.length - 1} />,
     },
     {
       key: 'total',
-      header: 'Total / Mila',
+      header: t('Total / Paid'),
       align: 'right',
       cell: (o) => {
         const f = finance[o.id];
@@ -210,7 +226,7 @@ export default function PaymentsPage() {
     },
     {
       key: 'bal',
-      header: 'Baaki',
+      header: t('Due'),
       align: 'right',
       hideOnMobile: true,
       cell: (o) => <span className="font-bold text-red-600">{money(finance[o.id]?.balance)}</span>,
@@ -227,10 +243,10 @@ export default function PaymentsPage() {
             rel="noreferrer"
             className="inline-flex h-8 items-center gap-1.5 rounded-xl bg-[#25D366] px-3 text-sm font-medium text-white hover:brightness-95"
           >
-            <MessageCircle className="h-4 w-4" /> Reminder
+            <MessageCircle className="h-4 w-4" /> {t('Reminder')}
           </a>
           <Button size="sm" onClick={() => openPay(o.id)} icon={<Wallet className="h-4 w-4" />}>
-            Payment
+            {t('Payment')}
           </Button>
         </div>
       ),
@@ -242,17 +258,17 @@ export default function PaymentsPage() {
   return (
     <div>
       <PageHeader
-        title="Payments"
-        subtitle="Advance, kishtein aur baaki ka hisaab"
+        title={t('Payments')}
+        subtitle={t('Advance, instalments and dues')}
         actions={
           <>
             {tab === 'payments' && (
               <Button variant="outline" icon={<Download className="h-4 w-4" />} onClick={exportCSV} disabled={!filtered.length}>
-                CSV
+                {t('CSV')}
               </Button>
             )}
             <Button icon={<Wallet className="h-4 w-4" />} onClick={() => openPay(undefined)}>
-              Payment lein
+              {t('Receive Payment')}
             </Button>
           </>
         }
@@ -263,21 +279,21 @@ export default function PaymentsPage() {
         onChange={setTab}
         className="mb-4"
         options={[
-          { value: 'payments', label: 'Payments' },
-          { value: 'dues', label: `Baaki (${dues.length})` },
+          { value: 'payments', label: t('Payments') },
+          { value: 'dues', label: t('Dues ({n})', { n: dues.length }) },
         ]}
       />
 
       {tab === 'payments' ? (
         <>
           <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <SummaryTile label="Total mila" value={money(totals.all)} strong />
-            <SummaryTile label="Cash" value={money(totals.cash)} />
-            <SummaryTile label="UPI" value={money(totals.upi)} />
-            <SummaryTile label="Bank" value={money(totals.bank)} />
+            <SummaryTile label={t('Total received')} value={money(totals.all)} strong />
+            <SummaryTile label={t('Cash')} value={money(totals.cash)} />
+            <SummaryTile label={t('UPI')} value={money(totals.upi)} />
+            <SummaryTile label={t('Bank')} value={money(totals.bank)} />
           </div>
           <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-            <SearchInput value={q} onChange={setQ} placeholder="Grahak, order ya receipt no..." className="sm:min-w-[240px] sm:flex-1" />
+            <SearchInput value={q} onChange={setQ} placeholder={t('Customer, order or receipt no...')} className="sm:min-w-[240px] sm:flex-1" />
             <div className="flex gap-2">
               <Input
                 type="month"
@@ -290,17 +306,17 @@ export default function PaymentsPage() {
                 className="w-auto"
               />
               <Button variant={allTime ? 'primary' : 'outline'} onClick={() => setAllTime((v) => !v)}>
-                Sab
+                {t('All')}
               </Button>
               <Select
                 value={mode}
                 onChange={(e) => setMode(e.target.value)}
                 className="w-auto"
                 options={[
-                  { value: '', label: 'Sab mode' },
-                  { value: 'cash', label: 'Cash' },
-                  { value: 'upi', label: 'UPI' },
-                  { value: 'bank', label: 'Bank' },
+                  { value: '', label: t('All modes') },
+                  { value: 'cash', label: t('Cash') },
+                  { value: 'upi', label: t('UPI') },
+                  { value: 'bank', label: t('Bank') },
                 ]}
               />
             </div>
@@ -312,8 +328,8 @@ export default function PaymentsPage() {
             empty={
               <EmptyState
                 icon={<Wallet className="h-6 w-6" />}
-                title="Koi payment nahi"
-                description={allTime ? 'Abhi tak koi payment record nahi hua' : 'Is mahine koi payment nahi - "Sab" dabakar purane dekhein'}
+                title={t('No payments')}
+                description={allTime ? t('No payments recorded yet') : t('No payments this month - tap "All" to see older ones')}
               />
             }
           />
@@ -322,17 +338,17 @@ export default function PaymentsPage() {
         <>
           <Card className="mb-3 flex items-center justify-between p-4">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-wood-600">Kul baaki</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-wood-600">{t('Total due')}</p>
               <p className="text-2xl font-bold text-red-600">{money(totalDue)}</p>
             </div>
-            <p className="text-sm text-wood-700">{dues.length} orders</p>
+            <p className="text-sm text-wood-700">{t('{n} orders', { n: dues.length })}</p>
           </Card>
-          <SearchInput value={q} onChange={setQ} placeholder="Grahak, phone ya order no..." className="mb-4" />
+          <SearchInput value={q} onChange={setQ} placeholder={t('Customer, phone or order no...')} className="mb-4" />
           <DataTable
             rows={dues}
             columns={dueColumns}
             rowKey={(o) => o.id}
-            empty={<EmptyState icon={<Wallet className="h-6 w-6" />} title="Sab clear hai" description="Kisi order ka paisa baaki nahi hai" />}
+            empty={<EmptyState icon={<Wallet className="h-6 w-6" />} title={t('All clear')} description={t('No order has a pending balance')} />}
           />
         </>
       )}

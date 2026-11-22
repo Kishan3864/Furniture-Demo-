@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useData } from '@/lib/data';
+import { useT } from '@/lib/i18n';
 import { saveKarigar } from '@/lib/actions';
 import { karigarSchema, validate } from '@/lib/schemas';
 import type { Karigar } from '@/lib/types';
@@ -20,6 +21,7 @@ export function KarigarModal({
   karigar?: Karigar | null;
   onSaved?: (id: string) => void;
 }) {
+  const t = useT();
   const { settings, karigars } = useData();
   const [f, setF] = useState({ name: '', phone: '', skill: '', active: true });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -42,11 +44,11 @@ export function KarigarModal({
     if (!v.ok) return setErrors(v.errors);
     const digits = v.data.phone.replace(/\D/g, '').slice(-10);
     const dup = karigars.find((k) => k.id !== karigar?.id && k.phone.replace(/\D/g, '').slice(-10) === digits);
-    if (dup) return setErrors({ phone: `Yeh number "${dup.name}" ka hai` });
+    if (dup) return setErrors({ phone: t('This number belongs to "{name}"', { name: dup.name }) });
     setSaving(true);
     try {
       const id = await saveKarigar(v.data, karigar?.id);
-      toast.success(karigar ? 'Karigar update ho gaya' : 'Naya karigar jud gaya');
+      toast.success(karigar ? t('Worker updated') : t('New worker added'));
       onSaved?.(id);
       onClose();
     } catch (e) {
@@ -62,23 +64,23 @@ export function KarigarModal({
     <Modal
       open={open}
       onClose={onClose}
-      title={karigar ? 'Karigar edit' : 'Naya Karigar'}
+      title={karigar ? t('Edit Worker') : t('Add Worker')}
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
-            Cancel
+            {t('Cancel')}
           </Button>
           <Button onClick={save} loading={saving}>
-            Save
+            {t('Save')}
           </Button>
         </>
       }
     >
       <div className="space-y-3">
-        <Field label="Naam" required error={errors.name}>
+        <Field label={t('Name')} required error={errors.name}>
           <Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} invalid={!!errors.name} autoFocus />
         </Field>
-        <Field label="Phone" required error={errors.phone}>
+        <Field label={t('Phone')} required error={errors.phone}>
           <Input
             value={f.phone}
             inputMode="tel"
@@ -87,8 +89,13 @@ export function KarigarModal({
             invalid={!!errors.phone}
           />
         </Field>
-        <Field label="Skill / Kaam" hint="List se chunein ya khud likhein" error={errors.skill}>
-          <Input list="karigar-skills" value={f.skill} onChange={(e) => setF({ ...f, skill: e.target.value })} placeholder="Carpenter, Polish wala..." />
+        <Field label={t('Skill / Work')} hint={t('Pick from the list or type your own')} error={errors.skill}>
+          <Input
+            list="karigar-skills"
+            value={f.skill}
+            onChange={(e) => setF({ ...f, skill: e.target.value })}
+            placeholder={t('Carpenter, Polisher...')}
+          />
           <datalist id="karigar-skills">
             {skills.map((s) => (
               <option key={s} value={s} />
@@ -108,12 +115,16 @@ export function KarigarModal({
                     : 'rounded-full bg-wood-100 px-3 py-1 text-xs font-medium text-wood-800 hover:bg-wood-200'
                 }
               >
-                {s}
+                {t(s)}
               </button>
             ))}
           </div>
         )}
-        <Toggle checked={f.active} onChange={(v) => setF({ ...f, active: v })} label={f.active ? 'Active (kaam par hai)' : 'Inactive'} />
+        <Toggle
+          checked={f.active}
+          onChange={(v) => setF({ ...f, active: v })}
+          label={f.active ? t('Active (currently working)') : t('Inactive')}
+        />
       </div>
     </Modal>
   );

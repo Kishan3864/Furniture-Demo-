@@ -27,6 +27,8 @@ import { useData } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Button, LinkButton, PageLoader } from './ui';
 import { GlobalSearch } from './global-search';
+import { LanguageSwitch } from './language-switch';
+import { useT } from '@/lib/i18n';
 import { StoredImg } from './stored-image';
 
 interface NavItem {
@@ -38,18 +40,18 @@ interface NavItem {
 const OWNER_NAV: NavItem[] = [
   { href: '/', label: 'Dashboard', icon: <House className="h-5 w-5" /> },
   { href: '/orders', label: 'Orders', icon: <ClipboardList className="h-5 w-5" /> },
-  { href: '/board', label: 'Kaam kahan tak', icon: <Hammer className="h-5 w-5" /> },
-  { href: '/delivery', label: 'Delivery', icon: <Truck className="h-5 w-5" /> },
-  { href: '/customers', label: 'Grahak', icon: <Users className="h-5 w-5" /> },
+  { href: '/board', label: 'Work Progress', icon: <Hammer className="h-5 w-5" /> },
+  { href: '/delivery', label: 'Deliveries', icon: <Truck className="h-5 w-5" /> },
+  { href: '/customers', label: 'Customers', icon: <Users className="h-5 w-5" /> },
   { href: '/payments', label: 'Payments', icon: <Wallet className="h-5 w-5" /> },
-  { href: '/karigar', label: 'Karigar', icon: <Wrench className="h-5 w-5" /> },
+  { href: '/karigar', label: 'Workers', icon: <Wrench className="h-5 w-5" /> },
   { href: '/stock', label: 'Stock', icon: <Boxes className="h-5 w-5" /> },
-  { href: '/expenses', label: 'Kharcha', icon: <Receipt className="h-5 w-5" /> },
+  { href: '/expenses', label: 'Expenses', icon: <Receipt className="h-5 w-5" /> },
   { href: '/reports', label: 'Reports', icon: <ChartColumn className="h-5 w-5" /> },
   { href: '/settings', label: 'Settings', icon: <Settings className="h-5 w-5" /> },
 ];
 
-const KARIGAR_NAV: NavItem[] = [{ href: '/jobs', label: 'Mera Kaam', icon: <Hammer className="h-5 w-5" /> }];
+const KARIGAR_NAV: NavItem[] = [{ href: '/jobs', label: 'My Jobs', icon: <Hammer className="h-5 w-5" /> }];
 
 const MOBILE_MAIN = ['/', '/orders', '/board', '/delivery'];
 
@@ -103,6 +105,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const online = useOnline();
   const [more, setMore] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const t = useT();
 
   useEffect(() => {
     if (ready && !fbUser) router.replace('/login');
@@ -133,17 +136,17 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const mobileMore = useMemo(() => OWNER_NAV.filter((n) => !MOBILE_MAIN.includes(n.href)), []);
 
   if (!ready || (fbUser && !user && !noProfile)) return <PageLoader />;
-  if (!fbUser) return <PageLoader label="Login page khul raha hai..." />;
+  if (!fbUser) return <PageLoader label={t('Opening sign in...')} />;
   if (noProfile)
     return (
       <div className="flex min-h-screen items-center justify-center p-6">
         <div className="max-w-sm rounded-2xl border border-wood-100 bg-white p-6 text-center shadow-soft">
-          <p className="text-lg font-bold text-wood-950">Account active nahi hai</p>
+          <p className="text-lg font-bold text-wood-950">{t('Account not active')}</p>
           <p className="mt-2 text-sm text-wood-700">
-            Aapka login ({fbUser.email}) abhi kisi workshop se juda nahi hai ya band kar diya gaya hai. Owner se baat karein.
+            {t('Your login ({email}) is not linked to this workshop or has been turned off. Please contact the owner.', { email: fbUser.email })}
           </p>
           <Button className="mt-5 w-full" variant="outline" icon={<LogOut className="h-4 w-4" />} onClick={logout}>
-            Logout
+            {t('Sign out')}
           </Button>
         </div>
       </div>
@@ -160,7 +163,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
         {isOwner && (
           <div className="px-3 pb-2">
             <LinkButton href="/orders/new" className="w-full" icon={<Plus className="h-4 w-4" />}>
-              Naya Order
+              {t('New Order')}
             </LinkButton>
           </div>
         )}
@@ -175,7 +178,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
               )}
             >
               {n.icon}
-              {n.label}
+              {t(n.label)}
             </Link>
           ))}
         </nav>
@@ -183,11 +186,12 @@ export default function AppShell({ children }: { children: ReactNode }) {
           <div className="mb-2 px-1">
             <p className="truncate text-sm font-semibold text-wood-900">{user?.name}</p>
             <p className="truncate text-xs text-wood-600">
-              {user?.role === 'owner' ? 'Owner' : 'Karigar'} · {user?.email}
+              {user?.role === 'owner' ? t('Admin') : t('Worker')} · {user?.email}
             </p>
           </div>
+          <LanguageSwitch className="mb-2 px-1" />
           <Button variant="ghost" size="sm" className="w-full justify-start" icon={<LogOut className="h-4 w-4" />} onClick={logout}>
-            Logout
+            {t('Sign out')}
           </Button>
         </div>
       </aside>
@@ -196,7 +200,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-20 border-b border-wood-100 bg-cream-100/90 backdrop-blur">
         {!online && (
           <div className="flex items-center justify-center gap-2 bg-amber-100 px-3 py-1 text-xs font-medium text-amber-900">
-            <WifiOff className="h-3.5 w-3.5" /> Offline - purana data dikh raha hai, changes internet aane par sync honge
+            <WifiOff className="h-3.5 w-3.5" /> {t('You are offline - showing saved data. Changes will sync when internet is back.')}
           </div>
         )}
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-4">
@@ -210,7 +214,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
               className="flex h-10 flex-1 items-center gap-2 rounded-xl border border-wood-200 bg-white px-3 text-left text-sm text-wood-400 hover:border-wood-300 lg:max-w-md"
             >
               <Search className="h-4 w-4" />
-              <span className="truncate">Grahak, phone ya order no. dhoondein...</span>
+              <span className="truncate">{t('Search customer, phone or order no...')}</span>
               <kbd className="ml-auto hidden rounded border border-wood-200 px-1.5 text-[10px] text-wood-500 sm:inline">Ctrl K</kbd>
             </button>
           ) : (
@@ -218,13 +222,16 @@ export default function AppShell({ children }: { children: ReactNode }) {
           )}
           {isOwner && (
             <LinkButton href="/orders/new" size="md" className="hidden sm:inline-flex lg:hidden" icon={<Plus className="h-4 w-4" />}>
-              Naya Order
+              {t('New Order')}
             </LinkButton>
           )}
           {isKarigar && (
-            <Button variant="ghost" size="sm" icon={<LogOut className="h-4 w-4" />} onClick={logout} className="lg:hidden">
-              Logout
-            </Button>
+            <>
+              <LanguageSwitch className="lg:hidden" showIcon={false} />
+              <Button variant="ghost" size="sm" icon={<LogOut className="h-4 w-4" />} onClick={logout} className="lg:hidden">
+                {t('Sign out')}
+              </Button>
+            </>
           )}
         </div>
       </header>
@@ -242,7 +249,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
               <Link
                 href="/orders/new"
                 className="-mt-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-wood-700 text-white shadow-lg shadow-wood-900/30"
-                aria-label="Naya Order"
+                aria-label={t('New Order')}
               >
                 <Plus className="h-7 w-7" />
               </Link>
@@ -259,7 +266,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
               )}
             >
               <Ellipsis className="h-5 w-5" />
-              More
+              {t('More')}
             </button>
           </div>
         </nav>
@@ -271,8 +278,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
           <div className="absolute inset-0 bg-wood-950/40" onClick={() => setMore(false)} />
           <div className="pb-safe absolute inset-x-0 bottom-0 rounded-t-3xl bg-cream-50 p-4">
             <div className="mb-3 flex items-center justify-between">
-              <p className="font-semibold text-wood-950">Menu</p>
-              <button onClick={() => setMore(false)} className="rounded-lg p-1.5 hover:bg-wood-100" aria-label="Close">
+              <p className="font-semibold text-wood-950">{t('Menu')}</p>
+              <button onClick={() => setMore(false)} className="rounded-lg p-1.5 hover:bg-wood-100" aria-label={t('Close')}>
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -287,7 +294,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                   )}
                 >
                   {n.icon}
-                  {n.label}
+                  {t(n.label)}
                 </Link>
               ))}
             </div>
@@ -297,8 +304,11 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 <p className="truncate text-xs text-wood-600">{user?.email}</p>
               </div>
               <Button variant="outline" size="sm" icon={<LogOut className="h-4 w-4" />} onClick={logout}>
-                Logout
+                {t('Sign out')}
               </Button>
+            </div>
+            <div className="mt-3 flex justify-center">
+              <LanguageSwitch />
             </div>
           </div>
         </div>
@@ -310,13 +320,14 @@ export default function AppShell({ children }: { children: ReactNode }) {
 }
 
 function MobileTab({ item, active }: { item: NavItem; active: boolean }) {
+  const t = useT();
   return (
     <Link
       href={item.href}
       className={cn('flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium', active ? 'text-wood-800' : 'text-wood-500')}
     >
       <span className={cn('rounded-lg px-3 py-0.5', active && 'bg-wood-100')}>{item.icon}</span>
-      <span className="max-w-full truncate">{item.label === 'Kaam kahan tak' ? 'Kaam' : item.label}</span>
+      <span className="max-w-full truncate">{item.label === 'Work Progress' ? t('Progress') : t(item.label)}</span>
     </Link>
   );
 }

@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Camera, Check, Copy, ExternalLink, ImagePlus, MessageCircle } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useData } from '@/lib/data';
+import { tr, useT } from '@/lib/i18n';
 import { addPayment, addProgressPhotos, removePhoto, saveCustomer, setStage } from '@/lib/actions';
 import { uploadOrderPhotos } from '@/lib/upload';
 import { customerSchema, paymentSchema, validate } from '@/lib/schemas';
@@ -36,11 +37,12 @@ export function statusUrl(token: string) {
 }
 
 export function statusMessage(order: Order, settings: WorkshopSettings) {
+  const item = order.title ? `${tr(order.itemType)} (${order.title})` : tr(order.itemType);
   const lines = [
-    `Namaste ${order.customerName} ji,`,
-    `Aapke ${order.itemType}${order.title ? ` (${order.title})` : ''} ka kaam: *${order.stage}* (${order.progress}%)`,
-    `Delivery: ${fmtDate(order.deliveryDate)}`,
-    `Photos aur status yahan dekhein: ${statusUrl(order.statusToken)}`,
+    tr('Hello {name},', { name: order.customerName }),
+    tr('Your {item} work status: *{stage}* ({progress}%)', { item, stage: tr(order.stage), progress: order.progress }),
+    tr('Delivery: {date}', { date: fmtDate(order.deliveryDate) }),
+    tr('See photos and status here: {url}', { url: statusUrl(order.statusToken) }),
     '',
     `- ${settings.name}${settings.phone ? ` (${settings.phone})` : ''}`,
   ];
@@ -77,6 +79,7 @@ export function OrderCard({
   extra?: React.ReactNode;
   className?: string;
 }) {
+  const t = useT();
   const { settings } = useData();
   const names = useKarigarNames();
   const delivered = isDelivered(order, settings);
@@ -87,7 +90,7 @@ export function OrderCard({
         <div className="min-w-0">
           <p className="text-xs font-semibold text-wood-600">{order.orderNo}</p>
           <p className="truncate font-semibold text-wood-950">
-            {order.itemType}
+            {t(order.itemType)}
             {order.quantity > 1 ? ` x${order.quantity}` : ''}
             {order.title ? <span className="font-normal text-wood-700"> · {order.title}</span> : null}
           </p>
@@ -99,11 +102,11 @@ export function OrderCard({
         </div>
       </div>
       <div className="mt-2.5 flex items-center justify-between gap-2 text-xs text-wood-700">
-        <span className="font-medium">{order.stage}</span>
+        <span className="font-medium">{t(order.stage)}</span>
         <span>{fmtDate(order.deliveryDate, 'dd MMM')}</span>
       </div>
       <ProgressBar value={order.progress} className="mt-1" showLabel />
-      {k && <p className="mt-2 truncate text-xs text-wood-600">Karigar: {k}</p>}
+      {k && <p className="mt-2 truncate text-xs text-wood-600">{t('Workers: {names}', { names: k })}</p>}
       {extra}
     </Card>
   );
@@ -119,15 +122,16 @@ export function OrderCard({
 /* ------------------------------ Job info (no prices) ------------------------------ */
 
 export function JobSpecs({ order }: { order: Order }) {
+  const t = useT();
   const rows: [string, React.ReactNode][] = [
-    ['Item', `${order.itemType}${order.quantity > 1 ? ` x ${order.quantity}` : ''}`],
-    ['Naap (L x W x H)', naapText(order.naap)],
-    ...(order.naap?.extra || []).filter((e) => e.label || e.value).map((e) => [e.label || 'Extra', e.value] as [string, string]),
-    ['Lakdi', order.wood || '-'],
-    ['Finish / Polish', order.finish || '-'],
-    ['Hardware', order.hardware || '-'],
-    ['Order date', fmtDate(order.orderDate)],
-    ['Delivery date', fmtDate(order.deliveryDate)],
+    [t('Item'), `${t(order.itemType)}${order.quantity > 1 ? ` x ${order.quantity}` : ''}`],
+    [t('Measurements (L x W x H)'), naapText(order.naap)],
+    ...(order.naap?.extra || []).filter((e) => e.label || e.value).map((e) => [e.label || t('Extra'), e.value] as [string, string]),
+    [t('Wood'), order.wood ? t(order.wood) : '-'],
+    [t('Finish / Polish'), order.finish || '-'],
+    [t('Hardware'), order.hardware || '-'],
+    [t('Order date'), fmtDate(order.orderDate)],
+    [t('Delivery date'), fmtDate(order.deliveryDate)],
   ];
   return (
     <div className="space-y-3">
@@ -141,19 +145,19 @@ export function JobSpecs({ order }: { order: Order }) {
       </dl>
       {order.naap?.notes && (
         <div className="rounded-xl bg-wood-50 p-3 text-sm text-wood-800">
-          <span className="font-semibold">Naap notes: </span>
+          <span className="font-semibold">{t('Measurement notes:')} </span>
           {order.naap.notes}
         </div>
       )}
       {order.notes && (
         <div className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
-          <span className="font-semibold">Notes: </span>
+          <span className="font-semibold">{t('Notes:')} </span>
           {order.notes}
         </div>
       )}
       {order.refLink && (
         <a href={order.refLink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm font-medium text-wood-700 underline">
-          <ExternalLink className="h-4 w-4" /> Reference design link
+          <ExternalLink className="h-4 w-4" /> {t('Reference design link')}
         </a>
       )}
     </div>
@@ -163,6 +167,7 @@ export function JobSpecs({ order }: { order: Order }) {
 /* ------------------------------ StageStepper ------------------------------ */
 
 export function StageStepper({ order, editable }: { order: Order; editable: boolean }) {
+  const t = useT();
   const { settings } = useData();
   const { user } = useAuth();
   const confirm = useConfirm();
@@ -177,17 +182,17 @@ export function StageStepper({ order, editable }: { order: Order; editable: bool
   const set = async (idx: number) => {
     if (idx === order.stageIndex) return;
     if (idx < order.stageIndex) {
-      const ok = await confirm({ title: 'Stage peeche karein?', message: `Stage "${stages[idx].name}" par wapas le jaana hai?` });
+      const ok = await confirm({ title: t('Move stage back?'), message: t('Move back to stage "{stage}"?', { stage: t(stages[idx].name) }) });
       if (!ok) return;
     }
     if (idx === stages.length - 1) {
-      const ok = await confirm({ title: 'Delivered mark karein?', message: 'Order delivered ho gaya hai?', confirmText: 'Haan, delivered' });
+      const ok = await confirm({ title: t('Mark as delivered?'), message: t('Has this order been delivered?'), confirmText: t('Yes, delivered') });
       if (!ok) return;
     }
     setBusy(idx);
     try {
       await setStage(order, idx, settings, user?.name);
-      toast.success(`Stage: ${stages[idx].name}`);
+      toast.success(t('Stage: {stage}', { stage: t(stages[idx].name) }));
     } catch (e) {
       toast.error(errMsg(e));
     } finally {
@@ -225,7 +230,7 @@ export function StageStepper({ order, editable }: { order: Order; editable: bool
                   {done ? <Check className="h-4 w-4" /> : i + 1}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block font-medium">{s.name}</span>
+                  <span className="block font-medium">{t(s.name)}</span>
                   {at && (i <= order.stageIndex) && (
                     <span className={cn('block text-xs', current ? 'text-wood-100' : 'text-wood-600')}>{fmtDateTime(at)}</span>
                   )}
@@ -238,7 +243,7 @@ export function StageStepper({ order, editable }: { order: Order; editable: bool
           );
         })}
       </ol>
-      {editable && <p className="mt-2 text-xs text-wood-600">Stage badalne ke liye us par tap karein.</p>}
+      {editable && <p className="mt-2 text-xs text-wood-600">{t('Tap a stage to change it.')}</p>}
     </div>
   );
 }
@@ -246,6 +251,7 @@ export function StageStepper({ order, editable }: { order: Order; editable: bool
 /* ------------------------------ Progress photos + share ------------------------------ */
 
 export function ShareButtons({ order }: { order: Order }) {
+  const t = useT();
   const { settings } = useData();
   const url = statusUrl(order.statusToken);
   return (
@@ -256,7 +262,7 @@ export function ShareButtons({ order }: { order: Order }) {
         rel="noreferrer"
         className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#25D366] px-4 text-sm font-semibold text-white hover:brightness-95"
       >
-        <MessageCircle className="h-4 w-4" /> Send to Grahak
+        <MessageCircle className="h-4 w-4" /> {t('Send to customer')}
       </a>
       <Button
         variant="outline"
@@ -264,22 +270,23 @@ export function ShareButtons({ order }: { order: Order }) {
         onClick={async () => {
           try {
             await navigator.clipboard.writeText(url);
-            toast.success('Status link copy ho gaya');
+            toast.success(t('Status link copied'));
           } catch {
-            toast.error('Copy nahi hua');
+            toast.error(t('Could not copy'));
           }
         }}
       >
-        Copy link
+        {t('Copy link')}
       </Button>
       <a href={url} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center gap-2 rounded-xl px-3 text-sm font-medium text-wood-700 hover:bg-wood-100">
-        <ExternalLink className="h-4 w-4" /> Status page
+        <ExternalLink className="h-4 w-4" /> {t('Status page')}
       </a>
     </div>
   );
 }
 
 export function ProgressPhotos({ order, canDelete }: { order: Order; canDelete: boolean }) {
+  const t = useT();
   const { user } = useAuth();
   const confirm = useConfirm();
   const [uploading, setUploading] = useState<string | null>(null);
@@ -289,7 +296,7 @@ export function ProgressPhotos({ order, canDelete }: { order: Order; canDelete: 
     try {
       const photos = await uploadOrderPhotos(order.id, 'progress', files, user?.name, (d, t) => setUploading(`${d}/${t}`));
       await addProgressPhotos(order, photos);
-      toast.success(`${photos.length} photo upload ho gayi`);
+      toast.success(t('{n} photo(s) uploaded', { n: photos.length }));
     } catch (e) {
       toast.error(errMsg(e));
     } finally {
@@ -303,10 +310,10 @@ export function ProgressPhotos({ order, canDelete }: { order: Order; canDelete: 
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
         <ImagePickButton onPick={onPick} capture multiple={false} variant="primary" icon={<Camera className="h-4 w-4" />} loading={!!uploading}>
-          {uploading ? `Upload ${uploading}` : 'Photo khinchein'}
+          {uploading ? t('Uploading {progress}', { progress: uploading }) : t('Take photo')}
         </ImagePickButton>
         <ImagePickButton onPick={onPick} icon={<ImagePlus className="h-4 w-4" />} loading={!!uploading}>
-          Gallery se
+          {t('From gallery')}
         </ImagePickButton>
       </div>
       {photos.length ? (
@@ -315,11 +322,11 @@ export function ProgressPhotos({ order, canDelete }: { order: Order; canDelete: 
           onRemove={
             canDelete
               ? async (i) => {
-                  const ok = await confirm({ title: 'Photo delete karein?', danger: true, confirmText: 'Delete' });
+                  const ok = await confirm({ title: t('Delete photo?'), danger: true, confirmText: t('Delete') });
                   if (!ok) return;
                   try {
                     await removePhoto(order, 'progress', photos[i]);
-                    toast.success('Photo delete ho gayi');
+                    toast.success(t('Photo deleted'));
                   } catch (e) {
                     toast.error(errMsg(e));
                   }
@@ -329,7 +336,7 @@ export function ProgressPhotos({ order, canDelete }: { order: Order; canDelete: 
         />
       ) : (
         <p className="rounded-xl border border-dashed border-wood-200 p-4 text-center text-sm text-wood-600">
-          Abhi koi progress photo nahi hai
+          {t('No progress photos yet')}
         </p>
       )}
     </div>
@@ -351,6 +358,7 @@ export function CustomerModal({
   onSaved?: (id: string) => void;
   initialName?: string;
 }) {
+  const t = useT();
   const { customers } = useData();
   const [f, setF] = useState({ name: '', phone: '', address: '', notes: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -373,11 +381,11 @@ export function CustomerModal({
     if (!v.ok) return setErrors(v.errors);
     const digits = v.data.phone.replace(/\D/g, '').slice(-10);
     const dup = customers.find((c) => c.id !== customer?.id && c.phone.replace(/\D/g, '').slice(-10) === digits);
-    if (dup) return setErrors({ phone: `Yeh number "${dup.name}" ke naam pe pehle se hai` });
+    if (dup) return setErrors({ phone: t('This number is already saved for "{name}"', { name: dup.name }) });
     setSaving(true);
     try {
       const id = await saveCustomer(v.data, customer?.id);
-      toast.success(customer ? 'Grahak update ho gaya' : 'Naya grahak jud gaya');
+      toast.success(customer ? t('Customer updated') : t('New customer added'));
       onSaved?.(id);
       onClose();
     } catch (e) {
@@ -391,23 +399,23 @@ export function CustomerModal({
     <Modal
       open={open}
       onClose={onClose}
-      title={customer ? 'Grahak edit' : 'Naya Grahak'}
+      title={customer ? t('Edit customer') : t('New customer')}
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
-            Cancel
+            {t('Cancel')}
           </Button>
           <Button onClick={save} loading={saving}>
-            Save
+            {t('Save')}
           </Button>
         </>
       }
     >
       <div className="space-y-3">
-        <Field label="Naam" required error={errors.name}>
+        <Field label={t('Name')} required error={errors.name}>
           <Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} invalid={!!errors.name} autoFocus />
         </Field>
-        <Field label="Phone" required error={errors.phone}>
+        <Field label={t('Phone')} required error={errors.phone}>
           <Input
             value={f.phone}
             inputMode="tel"
@@ -416,10 +424,10 @@ export function CustomerModal({
             placeholder="98XXXXXXXX"
           />
         </Field>
-        <Field label="Address" error={errors.address}>
+        <Field label={t('Address')} error={errors.address}>
           <Textarea value={f.address} rows={2} onChange={(e) => setF({ ...f, address: e.target.value })} />
         </Field>
-        <Field label="Notes" error={errors.notes}>
+        <Field label={t('Notes')} error={errors.notes}>
           <Textarea value={f.notes} rows={2} onChange={(e) => setF({ ...f, notes: e.target.value })} />
         </Field>
       </div>
@@ -440,6 +448,7 @@ export function PaymentModal({
   orderId?: string;
   onSaved?: (paymentId: string) => void;
 }) {
+  const t = useT();
   const { orders, finance, settings, orderById } = useData();
   const [f, setF] = useState({ orderId: '', amount: '', mode: 'cash' as PayMode, date: todayStr(), note: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -462,14 +471,14 @@ export function PaymentModal({
     const v = validate(paymentSchema, f);
     if (!v.ok) return setErrors(v.errors);
     const order = orderById[v.data.orderId];
-    if (!order) return setErrors({ orderId: 'Order nahi mila' });
+    if (!order) return setErrors({ orderId: 'Order not found' });
     if (fin && v.data.amount > fin.balance + 0.5) {
-      return setErrors({ amount: `Baaki sirf ${money(fin.balance)} hai` });
+      return setErrors({ amount: t('Only {amount} is due', { amount: money(fin.balance) }) });
     }
     setSaving(true);
     try {
       const id = await addPayment(order, { amount: v.data.amount, mode: v.data.mode, date: v.data.date, note: v.data.note }, settings);
-      toast.success(`${money(v.data.amount)} payment save ho gaya`);
+      toast.success(t('Payment of {amount} saved', { amount: money(v.data.amount) }));
       onSaved?.(id);
       onClose();
     } catch (e) {
@@ -483,50 +492,50 @@ export function PaymentModal({
     <Modal
       open={open}
       onClose={onClose}
-      title="Payment lein"
+      title={t('Receive payment')}
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
           <Button onClick={save} loading={saving}>
-            Save Payment
+            {t('Save payment')}
           </Button>
         </>
       }
     >
       <div className="space-y-3">
-        <Field label="Order" required error={errors.orderId}>
+        <Field label={t('Order')} required error={errors.orderId}>
           <Select
             value={f.orderId}
             onChange={(e) => setF({ ...f, orderId: e.target.value })}
             disabled={!!orderId}
             invalid={!!errors.orderId}
-            placeholder="Order chunein"
+            placeholder={t('Select an order')}
             options={dueOrders.map((o) => ({
               value: o.id,
-              label: `${o.orderNo} · ${o.customerName} · ${o.itemType} (Baaki ${money(finance[o.id]?.balance)})`,
+              label: `${o.orderNo} · ${o.customerName} · ${t(o.itemType)} (${t('Due {amount}', { amount: money(finance[o.id]?.balance) })})`,
             }))}
           />
         </Field>
         {fin && (
           <div className="grid grid-cols-3 gap-2 rounded-xl bg-wood-50 p-3 text-center text-sm">
             <div>
-              <p className="text-[11px] uppercase text-wood-500">Total</p>
+              <p className="text-[11px] uppercase text-wood-500">{t('Total')}</p>
               <p className="font-semibold">{money(fin.price - (fin.discount || 0))}</p>
             </div>
             <div>
-              <p className="text-[11px] uppercase text-wood-500">Mila</p>
+              <p className="text-[11px] uppercase text-wood-500">{t('Paid')}</p>
               <p className="font-semibold text-emerald-700">{money(fin.paid)}</p>
             </div>
             <div>
-              <p className="text-[11px] uppercase text-wood-500">Baaki</p>
+              <p className="text-[11px] uppercase text-wood-500">{t('Balance')}</p>
               <p className="font-semibold text-red-600">{money(fin.balance)}</p>
             </div>
           </div>
         )}
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Amount (₹)" required error={errors.amount}>
+          <Field label={t('Amount (₹)')} required error={errors.amount}>
             <Input
               type="number"
               inputMode="decimal"
@@ -536,28 +545,28 @@ export function PaymentModal({
               autoFocus
             />
           </Field>
-          <Field label="Date" required error={errors.date}>
+          <Field label={t('Date')} required error={errors.date}>
             <Input type="date" value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} />
           </Field>
         </div>
         {fin && fin.balance > 0 && (
           <button type="button" className="text-xs font-medium text-wood-700 underline" onClick={() => setF({ ...f, amount: String(fin.balance) })}>
-            Poora baaki {money(fin.balance)} bharein
+            {t('Fill full balance {amount}', { amount: money(fin.balance) })}
           </button>
         )}
-        <Field label="Mode">
+        <Field label={t('Mode')}>
           <Segmented
             value={f.mode}
             onChange={(v) => setF({ ...f, mode: v })}
             options={[
-              { value: 'cash', label: 'Cash' },
-              { value: 'upi', label: 'UPI' },
-              { value: 'bank', label: 'Bank' },
+              { value: 'cash', label: t('Cash') },
+              { value: 'upi', label: t('UPI') },
+              { value: 'bank', label: t('Bank') },
             ]}
           />
         </Field>
-        <Field label="Note">
-          <Input value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} placeholder="UPI ref / cheque no." />
+        <Field label={t('Note')}>
+          <Input value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} placeholder={t('UPI ref / cheque no.')} />
         </Field>
       </div>
     </Modal>
@@ -567,9 +576,10 @@ export function PaymentModal({
 /* ------------------------------ small bits ------------------------------ */
 
 export function StageBadge({ order }: { order: Order }) {
+  const t = useT();
   const { settings } = useData();
   const last = settings.stages.length - 1;
-  if (order.stageIndex >= last) return <Badge tone="green">{order.stage}</Badge>;
-  if (order.stageIndex === last - 1) return <Badge tone="purple">{order.stage}</Badge>;
-  return <Badge tone="wood">{order.stage}</Badge>;
+  if (order.stageIndex >= last) return <Badge tone="green">{t(order.stage)}</Badge>;
+  if (order.stageIndex === last - 1) return <Badge tone="purple">{t(order.stage)}</Badge>;
+  return <Badge tone="wood">{t(order.stage)}</Badge>;
 }

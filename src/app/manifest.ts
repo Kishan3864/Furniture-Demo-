@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'WoodBook - Furniture Workshop',
     short_name: 'WoodBook',
-    description: 'Orders, naap, karigar, delivery aur payments - ek jagah.',
+    description: 'Orders, measurements, workers, deliveries and payments in one place.',
     start_url: '/',
     scope: '/',
     display: 'standalone',
@@ -20,9 +20,9 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: '/icon-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ],
     shortcuts: [
-      { name: 'Naya Order', url: '/orders/new' },
-      { name: 'Delivery', url: '/delivery' },
-      { name: 'Kaam kahan tak', url: '/board' },
+      { name: 'New Order', url: '/orders/new' },
+      { name: 'Deliveries', url: '/delivery' },
+      { name: 'Work Progress', url: '/board' },
     ],
   };
 }

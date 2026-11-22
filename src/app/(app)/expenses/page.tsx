@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Download, Pencil, Plus, Receipt, Trash2 } from 'lucide-react';
 import { useData } from '@/lib/data';
+import { useT } from '@/lib/i18n';
 import { saveExpense, softDelete } from '@/lib/actions';
 import { expenseSchema, validate } from '@/lib/schemas';
 import type { Expense } from '@/lib/types';
@@ -27,6 +28,7 @@ import {
 } from '@/components/ui';
 
 export default function ExpensesPage() {
+  const t = useT();
   const { loading, expenses } = useData();
   const confirm = useConfirm();
   const [month, setMonth] = useState(todayStr().slice(0, 7));
@@ -44,9 +46,9 @@ export default function ExpensesPage() {
     const s = q.trim().toLowerCase();
     return inPeriod.filter((e) => {
       if (cat && e.category !== cat) return false;
-      return !s || e.category.toLowerCase().includes(s) || (e.note || '').toLowerCase().includes(s);
+      return !s || e.category.toLowerCase().includes(s) || t(e.category).toLowerCase().includes(s) || (e.note || '').toLowerCase().includes(s);
     });
-  }, [inPeriod, cat, q]);
+  }, [inPeriod, cat, q, t]);
 
   const total = filtered.reduce((a, e) => a + (e.amount || 0), 0);
 
@@ -59,53 +61,53 @@ export default function ExpensesPage() {
 
   const onDelete = async (e: Expense) => {
     const ok = await confirm({
-      title: 'Kharcha delete karein?',
-      message: `${fmtDate(e.date)} · ${e.category} · ${money(e.amount)}`,
+      title: t('Delete expense?'),
+      message: `${fmtDate(e.date)} · ${t(e.category)} · ${money(e.amount)}`,
       danger: true,
-      confirmText: 'Delete',
+      confirmText: t('Delete'),
     });
     if (!ok) return;
     try {
       await softDelete('expenses', e.id);
-      toast.success('Kharcha delete ho gaya');
+      toast.success(t('Expense deleted'));
     } catch (err) {
       toast.error(errMsg(err));
     }
   };
 
   const exportCSV = () => {
-    downloadCSV(`kharcha-${allTime ? 'all' : month}.csv`, [
-      ['Date', 'Category', 'Amount', 'Note'],
-      ...filtered.map((e) => [e.date, e.category, e.amount, e.note || '']),
+    downloadCSV(`expenses-${allTime ? 'all' : month}.csv`, [
+      [t('Date'), t('Category'), t('Amount'), t('Note')],
+      ...filtered.map((e) => [e.date, t(e.category), e.amount, e.note || '']),
       [],
-      ['Total', '', total, ''],
+      [t('Total'), '', total, ''],
     ]);
   };
 
   const columns: Column<Expense>[] = [
     {
       key: 'cat',
-      header: 'Category',
+      header: t('Category'),
       cell: (e) => (
         <div className="flex items-center justify-between gap-2">
-          <Badge tone="wood">{e.category}</Badge>
+          <Badge tone="wood">{t(e.category)}</Badge>
           <span className="font-bold text-wood-950 md:hidden">{money(e.amount)}</span>
         </div>
       ),
     },
-    { key: 'date', header: 'Date', cell: (e) => fmtDate(e.date) },
-    { key: 'amount', header: 'Amount', align: 'right', hideOnMobile: true, cell: (e) => <span className="font-semibold">{money(e.amount)}</span> },
-    { key: 'note', header: 'Note', cell: (e) => <span className="text-wood-700">{e.note || '-'}</span> },
+    { key: 'date', header: t('Date'), cell: (e) => fmtDate(e.date) },
+    { key: 'amount', header: t('Amount'), align: 'right', hideOnMobile: true, cell: (e) => <span className="font-semibold">{money(e.amount)}</span> },
+    { key: 'note', header: t('Note'), cell: (e) => <span className="text-wood-700">{e.note || '-'}</span> },
     {
       key: 'actions',
       header: '',
       align: 'right',
       cell: (e) => (
         <div className="flex justify-end gap-1">
-          <Button size="icon" variant="ghost" aria-label="Edit" onClick={() => setModal({ open: true, item: e })}>
+          <Button size="icon" variant="ghost" aria-label={t('Edit')} onClick={() => setModal({ open: true, item: e })}>
             <Pencil className="h-4 w-4" />
           </Button>
-          <Button size="icon" variant="ghost" aria-label="Delete" className="text-red-600 hover:bg-red-50" onClick={() => onDelete(e)}>
+          <Button size="icon" variant="ghost" aria-label={t('Delete')} className="text-red-600 hover:bg-red-50" onClick={() => onDelete(e)}>
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
@@ -118,15 +120,15 @@ export default function ExpensesPage() {
   return (
     <div>
       <PageHeader
-        title="Kharcha (Expenses)"
-        subtitle="Workshop ke rozana kharche"
+        title={t('Expenses')}
+        subtitle={t('Daily workshop expenses')}
         actions={
           <>
             <Button variant="outline" icon={<Download className="h-4 w-4" />} onClick={exportCSV} disabled={!filtered.length}>
-              CSV
+              {t('CSV')}
             </Button>
             <Button icon={<Plus className="h-4 w-4" />} onClick={() => setModal({ open: true, item: null })}>
-              Kharcha jodein
+              {t('Add Expense')}
             </Button>
           </>
         }
@@ -144,19 +146,19 @@ export default function ExpensesPage() {
           className="w-auto"
         />
         <Button variant={allTime ? 'primary' : 'outline'} onClick={() => setAllTime((v) => !v)}>
-          Sab
+          {t('All')}
         </Button>
       </div>
 
       <Card className="mb-4 p-4">
         <div className="flex flex-wrap items-end justify-between gap-2">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-wood-600">{allTime ? 'Kul kharcha' : 'Is period ka kharcha'}</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-wood-600">{allTime ? t('Total expenses') : t('Expenses this period')}</p>
             <p className="text-2xl font-bold text-wood-950">{money(periodTotal)}</p>
           </div>
           {cat && (
             <p className="text-sm text-wood-700">
-              {cat}: <b>{money(total)}</b>
+              {t(cat)}: <b>{money(total)}</b>
             </p>
           )}
         </div>
@@ -170,7 +172,7 @@ export default function ExpensesPage() {
                 !cat ? 'bg-wood-700 text-white' : 'bg-wood-100 text-wood-800 hover:bg-wood-200',
               )}
             >
-              Sab
+              {t('All')}
             </button>
             {byCat.map(([c, v]) => (
               <button
@@ -182,14 +184,14 @@ export default function ExpensesPage() {
                   cat === c ? 'bg-wood-700 text-white' : 'bg-wood-100 text-wood-800 hover:bg-wood-200',
                 )}
               >
-                {c} · {money(v)}
+                {t(c)} · {money(v)}
               </button>
             ))}
           </div>
         )}
       </Card>
 
-      <SearchInput value={q} onChange={setQ} placeholder="Note ya category dhoondein..." className="mb-4" />
+      <SearchInput value={q} onChange={setQ} placeholder={t('Search note or category...')} className="mb-4" />
 
       <DataTable
         rows={filtered}
@@ -198,11 +200,11 @@ export default function ExpensesPage() {
         empty={
           <EmptyState
             icon={<Receipt className="h-6 w-6" />}
-            title="Koi kharcha nahi"
-            description={allTime ? 'Pehla kharcha jodein' : 'Is mahine koi kharcha nahi - "Sab" dabakar purane dekhein'}
+            title={t('No expenses')}
+            description={allTime ? t('Add your first expense') : t('No expenses this month - tap "All" to see older ones')}
             action={
               <Button icon={<Plus className="h-4 w-4" />} onClick={() => setModal({ open: true, item: null })}>
-                Kharcha jodein
+                {t('Add Expense')}
               </Button>
             }
           />
@@ -215,6 +217,7 @@ export default function ExpensesPage() {
 }
 
 function ExpenseModal({ open, item, onClose }: { open: boolean; item: Expense | null; onClose: () => void }) {
+  const t = useT();
   const { settings } = useData();
   const [f, setF] = useState({ date: todayStr(), category: '', amount: '', note: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -241,7 +244,7 @@ function ExpenseModal({ open, item, onClose }: { open: boolean; item: Expense | 
     setSaving(true);
     try {
       await saveExpense(v.data, item?.id);
-      toast.success(item ? 'Kharcha update ho gaya' : 'Kharcha jud gaya');
+      toast.success(item ? t('Expense updated') : t('Expense added'));
       onClose();
     } catch (e) {
       toast.error(errMsg(e));
@@ -254,24 +257,24 @@ function ExpenseModal({ open, item, onClose }: { open: boolean; item: Expense | 
     <Modal
       open={open}
       onClose={onClose}
-      title={item ? 'Kharcha edit' : 'Naya kharcha'}
+      title={item ? t('Edit expense') : t('New expense')}
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
-            Cancel
+            {t('Cancel')}
           </Button>
           <Button onClick={save} loading={saving}>
-            Save
+            {t('Save')}
           </Button>
         </>
       }
     >
       <div className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Date" required error={errors.date}>
+          <Field label={t('Date')} required error={errors.date}>
             <Input type="date" value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} invalid={!!errors.date} />
           </Field>
-          <Field label="Amount (₹)" required error={errors.amount}>
+          <Field label={t('Amount (₹)')} required error={errors.amount}>
             <Input
               type="number"
               inputMode="decimal"
@@ -282,17 +285,17 @@ function ExpenseModal({ open, item, onClose }: { open: boolean; item: Expense | 
             />
           </Field>
         </div>
-        <Field label="Category" required error={errors.category}>
+        <Field label={t('Category')} required error={errors.category}>
           <Select
             value={f.category}
             onChange={(e) => setF({ ...f, category: e.target.value })}
             invalid={!!errors.category}
-            placeholder="Category chunein"
-            options={options}
+            placeholder={t('Select a category')}
+            options={options.map((c) => ({ value: c, label: t(c) }))}
           />
         </Field>
-        <Field label="Note">
-          <Textarea rows={2} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} placeholder="Kya liya, kisko diya..." />
+        <Field label={t('Note')}>
+          <Textarea rows={2} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} placeholder={t('What was bought, paid to whom...')} />
         </Field>
       </div>
     </Modal>

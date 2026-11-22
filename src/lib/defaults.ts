@@ -1,5 +1,6 @@
 import type { WorkshopSettings } from './types';
 
+/** Default workshop settings (English). Display code passes these through t() so Hinglish users see translations. */
 export const DEFAULT_SETTINGS: WorkshopSettings = {
   name: 'WoodBook Workshop',
   tagline: 'Brighton Solution',
@@ -7,21 +8,21 @@ export const DEFAULT_SETTINGS: WorkshopSettings = {
   address: '',
   phone: '',
   gst: '',
-  itemTypes: ['Almaari', 'Bed', 'Table', 'Sofa', 'Kitchen', 'Door', 'Custom'],
-  woodTypes: ['Sheesham', 'Teak', 'Ply', 'MDF', 'Mango', 'Pine', 'HDHMR', 'Particle Board'],
+  itemTypes: ['Wardrobe', 'Bed', 'Table', 'Sofa', 'Kitchen', 'Door', 'Custom'],
+  woodTypes: ['Sheesham', 'Teak', 'Plywood', 'MDF', 'Mango Wood', 'Pine', 'HDHMR', 'Particle Board'],
   stages: [
-    { name: 'Naap liya', percent: 10 },
-    { name: 'Design final', percent: 20 },
+    { name: 'Measurement', percent: 10 },
+    { name: 'Design Final', percent: 20 },
     { name: 'Cutting', percent: 40 },
     { name: 'Assembly', percent: 60 },
     { name: 'Polish', percent: 80 },
     { name: 'Ready', percent: 95 },
     { name: 'Delivered', percent: 100 },
   ],
-  expenseCategories: ['Lakdi / Material', 'Hardware', 'Polish', 'Transport', 'Bijli / Rent', 'Chai-Pani', 'Tools', 'Other'],
-  skills: ['Carpenter', 'Polish wala', 'Helper', 'Fitter', 'Designer'],
-  billTerms: '50% advance. Balance on delivery. Design change ke baad delivery date badal sakti hai.',
+  expenseCategories: ['Wood / Material', 'Hardware', 'Polish', 'Transport', 'Electricity / Rent', 'Tea & Snacks', 'Tools', 'Other'],
+  skills: ['Carpenter', 'Polisher', 'Helper', 'Fitter', 'Designer'],
+  billTerms: '50% advance with the order. Balance on delivery. Delivery date may change if the design is changed.',
 };
 
-export const STOCK_CATEGORIES = ['Lakdi', 'Ply', 'Hardware', 'Polish', 'Other'];
+export const STOCK_CATEGORIES = ['Wood', 'Plywood', 'Hardware', 'Polish', 'Other'];
 export const STOCK_UNITS = ['sheet', 'cft', 'sqft', 'ft', 'pcs', 'kg', 'ltr', 'box', 'set'];

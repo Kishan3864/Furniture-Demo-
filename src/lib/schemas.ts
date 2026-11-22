@@ -3,18 +3,18 @@ import { z } from 'zod';
 const phone = z
   .string()
   .trim()
-  .min(1, 'Phone zaroori hai')
-  .refine((v) => v.replace(/\D/g, '').length >= 10, 'Phone number sahi nahi hai (10 digit)');
+  .min(1, 'Phone is required')
+  .refine((v) => v.replace(/\D/g, '').length >= 10, 'Enter a valid 10 digit phone number');
 
 const optStr = z.string().trim().optional().or(z.literal(''));
-const money = z.coerce.number({ invalid_type_error: 'Number daalein' }).min(0, 'Minus nahi ho sakta');
-const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date chunein');
+const money = z.coerce.number({ invalid_type_error: 'Enter a number' }).min(0, 'Cannot be negative');
+const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Select a date');
 const optNum = z
   .union([z.literal(''), z.null(), z.coerce.number()])
   .transform((v) => (v === '' || v === null || Number.isNaN(v) ? null : Number(v)));
 
 export const customerSchema = z.object({
-  name: z.string().trim().min(2, 'Naam kam se kam 2 akshar'),
+  name: z.string().trim().min(2, 'Name must be at least 2 characters'),
   phone,
   address: optStr,
   notes: optStr,
@@ -23,10 +23,10 @@ export type CustomerInput = z.infer<typeof customerSchema>;
 
 export const orderSchema = z
   .object({
-    customerId: z.string().min(1, 'Grahak chunein'),
-    itemType: z.string().min(1, 'Item type chunein'),
+    customerId: z.string().min(1, 'Select a customer'),
+    itemType: z.string().min(1, 'Select an item type'),
     title: optStr,
-    quantity: z.coerce.number().int('Poora number').min(1, 'Kam se kam 1'),
+    quantity: z.coerce.number().int('Enter a whole number').min(1, 'Minimum 1'),
     naap: z.object({
       unit: z.enum(['ft', 'inch']),
       l: optNum,
@@ -35,7 +35,7 @@ export const orderSchema = z
       extra: z.array(z.object({ label: z.string(), value: z.string() })),
       notes: optStr,
     }),
-    refLink: z.string().trim().url('Link sahi nahi hai').optional().or(z.literal('')),
+    refLink: z.string().trim().url('Enter a valid link').optional().or(z.literal('')),
     wood: optStr,
     finish: optStr,
     hardware: optStr,
@@ -49,15 +49,15 @@ export const orderSchema = z
     notes: optStr,
   })
   .refine((v) => v.deliveryDate >= v.orderDate, {
-    message: 'Delivery date order date se pehle nahi ho sakti',
+    message: 'Delivery date cannot be before the order date',
     path: ['deliveryDate'],
   })
-  .refine((v) => v.discount <= v.price, { message: 'Discount price se zyada nahi', path: ['discount'] });
+  .refine((v) => v.discount <= v.price, { message: 'Discount cannot be more than the price', path: ['discount'] });
 export type OrderInput = z.infer<typeof orderSchema>;
 
 export const paymentSchema = z.object({
-  orderId: z.string().min(1, 'Order chunein'),
-  amount: z.coerce.number({ invalid_type_error: 'Amount daalein' }).positive('Amount 0 se zyada ho'),
+  orderId: z.string().min(1, 'Select an order'),
+  amount: z.coerce.number({ invalid_type_error: 'Enter an amount' }).positive('Amount must be more than 0'),
   mode: z.enum(['cash', 'upi', 'bank']),
   date,
   note: optStr,
@@ -65,7 +65,7 @@ export const paymentSchema = z.object({
 export type PaymentInput = z.infer<typeof paymentSchema>;
 
 export const karigarSchema = z.object({
-  name: z.string().trim().min(2, 'Naam zaroori hai'),
+  name: z.string().trim().min(2, 'Name is required'),
   phone,
   skill: optStr,
   active: z.boolean(),
@@ -73,33 +73,33 @@ export const karigarSchema = z.object({
 export type KarigarInput = z.infer<typeof karigarSchema>;
 
 export const karigarLoginSchema = z.object({
-  email: z.string().trim().email('Email sahi nahi hai'),
-  password: z.string().min(6, 'Kam se kam 6 character'),
+  email: z.string().trim().email('Enter a valid email'),
+  password: z.string().min(6, 'Minimum 6 characters'),
 });
 
 export const labourSchema = z.object({
-  karigarId: z.string().min(1, 'Karigar chunein'),
-  orderId: z.string().min(1, 'Order chunein'),
-  amount: money.refine((v) => v > 0, 'Amount daalein'),
+  karigarId: z.string().min(1, 'Select a worker'),
+  orderId: z.string().min(1, 'Select an order'),
+  amount: money.refine((v) => v > 0, 'Enter an amount'),
   paid: money,
   note: optStr,
 });
 export type LabourInput = z.infer<typeof labourSchema>;
 
 export const stockItemSchema = z.object({
-  name: z.string().trim().min(2, 'Naam zaroori hai'),
-  category: z.string().min(1, 'Category chunein'),
-  unit: z.string().min(1, 'Unit chunein'),
-  qty: z.coerce.number().min(0, 'Minus nahi'),
-  minQty: z.coerce.number().min(0, 'Minus nahi'),
+  name: z.string().trim().min(2, 'Name is required'),
+  category: z.string().min(1, 'Select a category'),
+  unit: z.string().min(1, 'Select a unit'),
+  qty: z.coerce.number().min(0, 'Cannot be negative'),
+  minQty: z.coerce.number().min(0, 'Cannot be negative'),
   rate: z.coerce.number().min(0).optional(),
 });
 export type StockItemInput = z.infer<typeof stockItemSchema>;
 
 export const stockMoveSchema = z.object({
-  itemId: z.string().min(1, 'Item chunein'),
+  itemId: z.string().min(1, 'Select an item'),
   type: z.enum(['in', 'out']),
-  qty: z.coerce.number({ invalid_type_error: 'Qty daalein' }).positive('Qty 0 se zyada ho'),
+  qty: z.coerce.number({ invalid_type_error: 'Enter quantity' }).positive('Quantity must be more than 0'),
   orderId: z.string().optional().or(z.literal('')),
   date,
   note: optStr,
@@ -108,14 +108,14 @@ export type StockMoveInput = z.infer<typeof stockMoveSchema>;
 
 export const expenseSchema = z.object({
   date,
-  category: z.string().min(1, 'Category chunein'),
-  amount: z.coerce.number({ invalid_type_error: 'Amount daalein' }).positive('Amount 0 se zyada ho'),
+  category: z.string().min(1, 'Select a category'),
+  amount: z.coerce.number({ invalid_type_error: 'Enter an amount' }).positive('Amount must be more than 0'),
   note: optStr,
 });
 export type ExpenseInput = z.infer<typeof expenseSchema>;
 
 export const settingsSchema = z.object({
-  name: z.string().trim().min(2, 'Workshop ka naam zaroori hai'),
+  name: z.string().trim().min(2, 'Workshop name is required'),
   tagline: optStr,
   address: optStr,
   phone: optStr,
@@ -124,7 +124,7 @@ export const settingsSchema = z.object({
     .trim()
     .optional()
     .or(z.literal(''))
-    .refine((v) => !v || /^[0-9A-Z]{15}$/.test(v.toUpperCase()), 'GSTIN 15 character ka hota hai'),
+    .refine((v) => !v || /^[0-9A-Z]{15}$/.test(v.toUpperCase()), 'GSTIN must be 15 characters'),
   billTerms: optStr,
 });
 

@@ -17,6 +17,7 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 import { createLoginForStaff, db } from './firebase';
+import { tr } from './i18n';
 import { deleteImage } from './upload';
 import { orderNo as fmtOrderNo, randomToken, receiptNo as fmtReceiptNo, todayStr } from './utils';
 import type {
@@ -163,7 +164,7 @@ export async function createOrder(input: OrderInput, settings: WorkshopSettings,
   const counterRef = doc(d, 'counters', 'orders');
   const rcCounterRef = doc(d, 'counters', 'receipts');
   const token = randomToken(22);
-  const stage0 = settings.stages[0] || { name: 'Naap liya', percent: 10 };
+  const stage0 = settings.stages[0] || { name: 'Measurement', percent: 10 };
   const t = now();
 
   return runTransaction(d, async (tx) => {
@@ -310,7 +311,7 @@ export async function updateOrder(
 export async function setStage(order: Order, index: number, settings: WorkshopSettings, by?: string) {
   const d = db();
   const st = settings.stages[index];
-  if (!st) throw new Error('Stage nahi mila');
+  if (!st) throw new Error(tr('Stage not found'));
   const t = now();
   const isLast = index >= settings.stages.length - 1;
   const history = [...(order.stageHistory || []), { stage: st.name, index, at: t, by: by || '' }];
@@ -406,7 +407,7 @@ export async function addPayment(
   await runTransaction(d, async (tx) => {
     const f = await tx.get(finRef);
     const rc = await tx.get(rcRef);
-    if (!f.exists()) throw new Error('Order ka hisaab nahi mila');
+    if (!f.exists()) throw new Error(tr('Order accounts not found'));
     const fin = f.data() as Finance;
     const rn = ((rc.exists() ? (rc.data().next as number) : 1) || 1) as number;
     const paid = (fin.paid || 0) + input.amount;
@@ -551,7 +552,7 @@ export async function moveStock(input: StockMoveInput, item: StockItem, order?: 
     const s = await tx.get(itemRef);
     const cur = s.exists() ? Number((s.data() as StockItem).qty) || 0 : 0;
     const next = input.type === 'in' ? cur + input.qty : cur - input.qty;
-    if (next < 0) throw new Error(`Stock kam hai - sirf ${cur} ${item.unit} bacha hai`);
+    if (next < 0) throw new Error(tr('Not enough stock - only {qty} {unit} left', { qty: cur, unit: item.unit }));
     tx.update(itemRef, { qty: Math.round(next * 1000) / 1000, updatedAt: now() });
     tx.set(moveRef, {
       itemId: item.id,

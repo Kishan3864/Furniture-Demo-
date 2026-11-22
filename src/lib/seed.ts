@@ -1,6 +1,6 @@
 /**
  * WoodBook demo data seeder.
- * Used by Settings > "Demo data daalein" and by `npm run seed` (scripts/seed.mts).
+ * Used by Settings > "Load demo data" and by `npm run seed` (scripts/seed.mts).
  *
  * NOTE: keep runtime imports limited to 'firebase/firestore' (no '@/' aliases,
  * no runtime relative imports) so Node can run this file with --experimental-strip-types.
@@ -46,8 +46,8 @@ export interface SeedResult {
 }
 
 const SEED_STAGES: StageDef[] = [
-  { name: 'Naap liya', percent: 10 },
-  { name: 'Design final', percent: 20 },
+  { name: 'Measurement', percent: 10 },
+  { name: 'Design Final', percent: 20 },
   { name: 'Cutting', percent: 40 },
   { name: 'Assembly', percent: 60 },
   { name: 'Polish', percent: 80 },
@@ -62,12 +62,12 @@ const SEED_SETTINGS: WorkshopSettings = {
   address: 'Plot 14, Industrial Area, Sector 5, Indore (M.P.)',
   phone: '9876500000',
   gst: '',
-  itemTypes: ['Almaari', 'Bed', 'Table', 'Sofa', 'Kitchen', 'Door', 'Custom'],
-  woodTypes: ['Sheesham', 'Teak', 'Ply', 'MDF', 'Mango', 'Pine', 'HDHMR', 'Particle Board'],
+  itemTypes: ['Wardrobe', 'Bed', 'Table', 'Sofa', 'Kitchen', 'Door', 'Custom'],
+  woodTypes: ['Sheesham', 'Teak', 'Plywood', 'MDF', 'Mango Wood', 'Pine', 'HDHMR', 'Particle Board'],
   stages: SEED_STAGES,
-  expenseCategories: ['Lakdi / Material', 'Hardware', 'Polish', 'Transport', 'Bijli / Rent', 'Chai-Pani', 'Tools', 'Other'],
-  skills: ['Carpenter', 'Polish wala', 'Helper', 'Fitter', 'Designer'],
-  billTerms: '50% advance. Balance on delivery. Design change ke baad delivery date badal sakti hai.',
+  expenseCategories: ['Wood / Material', 'Hardware', 'Polish', 'Transport', 'Electricity / Rent', 'Tea & Snacks', 'Tools', 'Other'],
+  skills: ['Carpenter', 'Polisher', 'Helper', 'Fitter', 'Designer'],
+  billTerms: '50% advance with the order. Balance on delivery. Delivery date may change if the design is changed.',
 };
 
 /* ------------------------------ helpers (inlined on purpose) ------------------------------ */
@@ -109,19 +109,19 @@ type Op = { ref: DocumentReference; data: Data; merge: boolean };
 /* ------------------------------ demo content ------------------------------ */
 
 const CUSTOMERS: Omit<Customer, 'id' | 'deleted' | 'createdAt'>[] = [
-  { name: 'Ramesh Sharma', phone: '9826012345', address: '22, Vijay Nagar, Indore', notes: 'Purane grahak - 3rd order' },
+  { name: 'Ramesh Sharma', phone: '9826012345', address: '22, Vijay Nagar, Indore', notes: 'Regular customer - 3rd order' },
   { name: 'Sunita Verma', phone: '9893123456', address: 'B-104, Shalimar Township, Indore', notes: '' },
-  { name: 'Amit Patel', phone: '9755234567', address: 'Flat 7, Silicon City, Rau', notes: 'Naya flat - poora interior' },
-  { name: 'Priya Singh', phone: '9302345678', address: '45, Saket Nagar, Indore', notes: 'Shaam 5 baje ke baad call karein' },
+  { name: 'Amit Patel', phone: '9755234567', address: 'Flat 7, Silicon City, Rau', notes: 'New flat - full interior' },
+  { name: 'Priya Singh', phone: '9302345678', address: '45, Saket Nagar, Indore', notes: 'Call after 5 PM' },
   { name: 'Mohd. Irfan', phone: '9425456789', address: 'Khajrana Main Road, Indore', notes: '' },
   { name: 'Neha Gupta', phone: '9171567890', address: '12, Scheme 54, Indore', notes: 'Reference: Ramesh Sharma' },
 ];
 
 const KARIGARS: Omit<Karigar, 'id' | 'deleted' | 'createdAt'>[] = [
-  { name: 'Raju Mistri', phone: '9009011111', skill: 'Carpenter', email: null, uid: null, active: true },
-  { name: 'Suresh Polishwala', phone: '9009022222', skill: 'Polish wala', email: null, uid: null, active: true },
+  { name: 'Raju Vishwakarma', phone: '9009011111', skill: 'Carpenter', email: null, uid: null, active: true },
+  { name: 'Suresh Kumar', phone: '9009022222', skill: 'Polisher', email: null, uid: null, active: true },
   { name: 'Vikram Singh', phone: '9009033333', skill: 'Fitter', email: null, uid: null, active: true },
-  { name: 'Pappu', phone: '9009044444', skill: 'Helper', email: null, uid: null, active: true },
+  { name: 'Pappu Yadav', phone: '9009044444', skill: 'Helper', email: null, uid: null, active: true },
 ];
 
 interface OrderSpec {
@@ -150,7 +150,7 @@ interface OrderSpec {
 
 const ORDERS: OrderSpec[] = [
   {
-    c: 0, item: 'Almaari', title: '3 door wardrobe with loft', qty: 1, naap: [7, 6, 2, 'ft'],
+    c: 0, item: 'Wardrobe', title: '3 door wardrobe with loft', qty: 1, naap: [7, 6, 2, 'ft'],
     extra: [['Loft height', '2 ft'], ['Shelves', '5 + 2 drawers']], naapNotes: 'Left side mirror shutter',
     wood: 'Sheesham', finish: 'Walnut PU (matt)', hardware: 'Hettich soft-close hinges, Godrej lock',
     orderOffset: -20, deliveryOffset: -2, priority: 'high', stage: 4, k: [0, 1], price: 68000,
@@ -165,11 +165,11 @@ const ORDERS: OrderSpec[] = [
   },
   {
     c: 2, item: 'Kitchen', title: 'L-shape modular kitchen', qty: 1, naap: [10, 2, 2.8, 'ft'],
-    extra: [['Short side', '7 ft'], ['Upper cabinets', '2 ft depth 1.2 ft']], naapNotes: 'Chimney ki jagah 3 ft chhodni hai',
-    wood: 'Ply', finish: 'Acrylic gloss white + grey', hardware: 'Hettich channels soft-close, tandem baskets',
+    extra: [['Short side', '7 ft'], ['Upper cabinets', '2 ft depth 1.2 ft']], naapNotes: 'Leave 3 ft space for the chimney',
+    wood: 'Plywood', finish: 'Acrylic gloss white + grey', hardware: 'Hettich channels soft-close, tandem baskets',
     orderOffset: -25, deliveryOffset: 3, priority: 'urgent', stage: 3, k: [0, 2, 3], price: 145000, discount: 5000,
     pays: [[50000, 'bank', -25]], labour: [[0, 15000, 7000], [2, 6000, 0], [3, 3000, 3000]],
-    notes: 'Granite wala 3rd party - date coordinate karni hai',
+    notes: 'Granite by a 3rd party - coordinate the date',
   },
   {
     c: 3, item: 'Sofa', title: 'L-shape 5+2 seater', qty: 1, naap: [8, 6, 2.8, 'ft'],
@@ -201,8 +201,8 @@ const ORDERS: OrderSpec[] = [
     pays: [[10000, 'cash', -30], [8000, 'upi', -5]], labour: [[2, 3500, 3500]],
   },
   {
-    c: 2, item: 'Almaari', title: 'Sliding wardrobe (bedroom 2)', qty: 1, naap: [8, 6, 2, 'ft'],
-    extra: [['Shutters', '2 sliding, 1 mirror']], wood: 'Ply', finish: 'Laminate - oak',
+    c: 2, item: 'Wardrobe', title: 'Sliding wardrobe (bedroom 2)', qty: 1, naap: [8, 6, 2, 'ft'],
+    extra: [['Shutters', '2 sliding, 1 mirror']], wood: 'Plywood', finish: 'Laminate - oak',
     hardware: 'Ebco sliding system', orderOffset: -12, deliveryOffset: -1, priority: 'high', stage: 3, k: [2, 3],
     price: 58000, pays: [[20000, 'bank', -12]], labour: [[2, 7000, 2000]],
   },
@@ -212,8 +212,8 @@ const ORDERS: OrderSpec[] = [
     priority: 'normal', stage: 4, k: [1], price: 9500, pays: [[4000, 'cash', -6]], labour: [[1, 1200, 0]],
   },
   {
-    c: 4, item: 'Bed', title: 'Single bed (bachchon ke liye)', qty: 2, naap: [6.5, 3.5, 1.5, 'ft'],
-    wood: 'Mango', finish: 'Teak finish polish', hardware: '-', orderOffset: -18, deliveryOffset: 1,
+    c: 4, item: 'Bed', title: 'Single bed (kids room)', qty: 2, naap: [6.5, 3.5, 1.5, 'ft'],
+    wood: 'Mango Wood', finish: 'Teak finish polish', hardware: '-', orderOffset: -18, deliveryOffset: 1,
     priority: 'normal', stage: 5, k: [0], price: 26000, pays: [[13000, 'cash', -18]], labour: [[0, 4000, 2000]],
   },
 ];
@@ -228,10 +228,10 @@ interface StockSpec {
 }
 
 const STOCK: StockSpec[] = [
-  { name: 'Sheesham lakdi', category: 'Lakdi', unit: 'cft', qty: 19, minQty: 10, rate: 2800 },
-  { name: 'Teak lakdi', category: 'Lakdi', unit: 'cft', qty: 4, minQty: 5, rate: 4500 },
-  { name: 'Ply 18mm BWP', category: 'Ply', unit: 'sheet', qty: 22, minQty: 10, rate: 2600 },
-  { name: 'MDF 12mm', category: 'Ply', unit: 'sheet', qty: 3, minQty: 5, rate: 1350 },
+  { name: 'Sheesham wood', category: 'Wood', unit: 'cft', qty: 19, minQty: 10, rate: 2800 },
+  { name: 'Teak wood', category: 'Wood', unit: 'cft', qty: 4, minQty: 5, rate: 4500 },
+  { name: 'Plywood 18mm BWP', category: 'Plywood', unit: 'sheet', qty: 22, minQty: 10, rate: 2600 },
+  { name: 'MDF 12mm', category: 'Plywood', unit: 'sheet', qty: 3, minQty: 5, rate: 1350 },
   { name: 'Fevicol SH', category: 'Hardware', unit: 'kg', qty: 12, minQty: 5, rate: 320 },
   { name: 'Soft-close hinges', category: 'Hardware', unit: 'pcs', qty: 38, minQty: 50, rate: 95 },
   { name: 'Telescopic channels 18"', category: 'Hardware', unit: 'set', qty: 8, minQty: 6, rate: 380 },
@@ -245,8 +245,8 @@ const MOVES: [number, 'in' | 'out', number, number, number | null, string][] = [
   [2, 'in', 30, -32, null, 'Purchase - Century ply dealer'],
   [5, 'in', 50, -40, null, 'Purchase'],
   [8, 'in', 10, -35, null, 'Purchase'],
-  [0, 'out', 6, -18, 0, 'Almaari ke liye'],
-  [2, 'out', 8, -20, 2, 'Kitchen carcass'],
+  [0, 'out', 6, -18, 0, 'For the wardrobe'],
+  [2, 'out', 8, -20, 2, 'Kitchen cabinets'],
   [1, 'out', 3, -13, 1, 'Bed frame'],
   [5, 'out', 12, -5, 0, ''],
   [6, 'out', 4, -4, 2, 'Kitchen drawers'],
@@ -257,20 +257,20 @@ const MOVES: [number, 'in' | 'out', number, number, number | null, string][] = [
 // [dayOffset, categoryIdx, amount, note]
 const EXPENSES: [number, number, number, string][] = [
   [-80, 0, 32000, 'Sheesham 12 cft'],
-  [-75, 4, 6500, 'Workshop rent + bijli'],
+  [-75, 4, 6500, 'Workshop rent + electricity'],
   [-70, 3, 1800, 'Tempo - Vijay Nagar delivery'],
   [-62, 1, 4200, 'Hinges, channels'],
-  [-55, 5, 900, 'Chai-pani (mahina)'],
+  [-55, 5, 900, 'Tea & snacks (month)'],
   [-45, 0, 70000, 'Sheesham 25 cft'],
-  [-44, 4, 6500, 'Workshop rent + bijli'],
+  [-44, 4, 6500, 'Workshop rent + electricity'],
   [-40, 1, 4750, 'Hinges 50 pcs'],
   [-35, 2, 4200, 'Melamine polish 10 ltr'],
-  [-32, 0, 78000, 'Ply 18mm 30 sheet'],
+  [-32, 0, 78000, 'Plywood 18mm 30 sheets'],
   [-20, 6, 3500, 'Router bits + blade'],
-  [-14, 4, 6500, 'Workshop rent + bijli'],
+  [-14, 4, 6500, 'Workshop rent + electricity'],
   [-12, 3, 1500, 'Tempo - Rau site'],
-  [-6, 5, 850, 'Chai-pani'],
-  [-2, 7, 1200, 'Safai + misc'],
+  [-6, 5, 850, 'Tea & snacks'],
+  [-2, 7, 1200, 'Cleaning + misc'],
 ];
 
 /* ------------------------------ seeder ------------------------------ */

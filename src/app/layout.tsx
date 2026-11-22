@@ -4,7 +4,7 @@ import Providers from './providers';
 
 export const metadata: Metadata = {
   title: { default: 'WoodBook', template: '%s · WoodBook' },
-  description: 'Furniture workshop management - orders, naap, karigar, delivery, payments. By Brighton Solution.',
+  description: 'Furniture workshop management - orders, measurements, workers, deliveries and payments. By Brighton Solution.',
   applicationName: 'WoodBook',
   manifest: '/manifest.webmanifest',
   appleWebApp: { capable: true, title: 'WoodBook', statusBarStyle: 'default' },

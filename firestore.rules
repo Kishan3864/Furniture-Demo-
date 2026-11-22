@@ -19,7 +19,8 @@ service cloud.firestore {
 
     // First user who signs up becomes owner (one-time bootstrap)
     match /meta/owner {
-      allow get: if signedIn();
+      // public so the sign-in page can hide "Set up admin account" once an admin exists
+      allow get: if true;
       allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
       allow update, delete: if false;
     }

@@ -4,9 +4,11 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useData } from '@/lib/data';
+import { useT } from '@/lib/i18n';
 import { PageLoader } from '@/components/ui';
 
 export default function PrintLayout({ children }: { children: ReactNode }) {
+  const t = useT();
   const { ready, fbUser, isOwner } = useAuth();
   const { loading } = useData();
 
@@ -15,10 +17,10 @@ export default function PrintLayout({ children }: { children: ReactNode }) {
     return (
       <div className="flex min-h-screen items-center justify-center p-6">
         <div className="max-w-sm rounded-2xl border border-wood-100 bg-white p-6 text-center shadow-soft">
-          <p className="text-lg font-bold text-wood-950">Login zaroori hai</p>
-          <p className="mt-2 text-sm text-wood-700">Bill aur receipt sirf owner dekh sakta hai.</p>
+          <p className="text-lg font-bold text-wood-950">{t('Sign in required')}</p>
+          <p className="mt-2 text-sm text-wood-700">{t('Only the owner can view bills and receipts.')}</p>
           <Link href="/login" className="mt-4 inline-block rounded-xl bg-wood-700 px-4 py-2 text-sm font-medium text-white">
-            Login karein
+            {t('Sign in')}
           </Link>
         </div>
       </div>

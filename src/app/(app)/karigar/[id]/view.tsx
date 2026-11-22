@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Banknote, Hammer, KeyRound, Pencil, Phone, Plus, Trash2, Wallet } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { useData } from '@/lib/data';
+import { useT } from '@/lib/i18n';
 import { createKarigarLogin, deleteKarigar, payLabour, saveLabour, setKarigarLoginActive, softDelete } from '@/lib/actions';
 import { karigarLoginSchema, labourSchema, validate } from '@/lib/schemas';
 import type { Karigar, Labour } from '@/lib/types';
@@ -36,6 +37,7 @@ import { OrderCard } from '@/components/order-bits';
 import { KarigarModal } from '../karigar-modal';
 
 export default function KarigarDetailPage() {
+  const t = useT();
   const params = { id: useRouteParam('id', 2) };
   const id = params?.id as string;
   const router = useRouter();
@@ -66,24 +68,26 @@ export default function KarigarDetailPage() {
   if (loading) return <PageLoader />;
   if (!k)
     return (
-      <EmptyState title="Karigar nahi mila" description="Ho sakta hai delete ho gaya ho." action={<LinkButton href="/karigar">Karigar list</LinkButton>} />
+      <EmptyState
+        title={t('Worker not found')}
+        description={t('It may have been deleted.')}
+        action={<LinkButton href="/karigar">{t('All workers')}</LinkButton>}
+      />
     );
 
   const onDelete = async () => {
     const ok = await confirm({
-      title: 'Karigar delete karein?',
-      message: (
-        <>
-          <b>{k.name}</b> list se hat jayega aur unka login band ho jayega. Purane orders aur labour hisaab safe rahenge.
-        </>
-      ),
+      title: t('Delete worker?'),
+      message: t('{name} will be removed from the list and their login will be turned off. Old orders and labour records stay safe.', {
+        name: k.name,
+      }),
       danger: true,
-      confirmText: 'Delete',
+      confirmText: t('Delete'),
     });
     if (!ok) return;
     try {
       await deleteKarigar(k);
-      toast.success('Karigar delete ho gaya');
+      toast.success(t('Worker deleted'));
       router.replace('/karigar');
     } catch (e) {
       toast.error(errMsg(e));
@@ -91,11 +95,16 @@ export default function KarigarDetailPage() {
   };
 
   const onDeleteLabour = async (l: Labour) => {
-    const ok = await confirm({ title: 'Labour entry delete karein?', message: `${l.orderNo} · ${money(l.amount)}`, danger: true, confirmText: 'Delete' });
+    const ok = await confirm({
+      title: t('Delete labour entry?'),
+      message: `${l.orderNo} · ${money(l.amount)}`,
+      danger: true,
+      confirmText: t('Delete'),
+    });
     if (!ok) return;
     try {
       await softDelete('labour', l.id);
-      toast.success('Entry delete ho gayi');
+      toast.success(t('Entry deleted'));
     } catch (e) {
       toast.error(errMsg(e));
     }
@@ -104,29 +113,29 @@ export default function KarigarDetailPage() {
   const columns: Column<Labour>[] = [
     {
       key: 'order',
-      header: 'Order',
+      header: t('Order'),
       cell: (l) => (
         <div className="flex items-center justify-between gap-2">
           <Link href={`/orders/${l.orderId}`} className="font-semibold text-wood-800 underline">
             {l.orderNo}
           </Link>
-          <span className="text-sm font-normal text-wood-700 md:hidden">{l.itemType}</span>
+          <span className="text-sm font-normal text-wood-700 md:hidden">{t(l.itemType)}</span>
         </div>
       ),
     },
-    { key: 'item', header: 'Item', hideOnMobile: true, cell: (l) => l.itemType },
-    { key: 'amount', header: 'Amount', align: 'right', cell: (l) => money(l.amount) },
-    { key: 'paid', header: 'Diya', align: 'right', cell: (l) => <span className="text-emerald-700">{money(l.paid)}</span> },
+    { key: 'item', header: t('Item'), hideOnMobile: true, cell: (l) => t(l.itemType) },
+    { key: 'amount', header: t('Amount'), align: 'right', cell: (l) => money(l.amount) },
+    { key: 'paid', header: t('Paid out'), align: 'right', cell: (l) => <span className="text-emerald-700">{money(l.paid)}</span> },
     {
       key: 'due',
-      header: 'Baaki',
+      header: t('Due'),
       align: 'right',
       cell: (l) => {
         const due = Math.max(0, (l.amount || 0) - (l.paid || 0));
-        return due > 0 ? <span className="font-semibold text-red-600">{money(due)}</span> : <Badge tone="green">Clear</Badge>;
+        return due > 0 ? <span className="font-semibold text-red-600">{money(due)}</span> : <Badge tone="green">{t('Clear')}</Badge>;
       },
     },
-    { key: 'note', header: 'Note', cell: (l) => <span className="text-wood-700">{l.note || '-'}</span> },
+    { key: 'note', header: t('Note'), cell: (l) => <span className="text-wood-700">{l.note || '-'}</span> },
     {
       key: 'actions',
       header: '',
@@ -137,13 +146,13 @@ export default function KarigarDetailPage() {
           <div className="flex justify-end gap-1">
             {due > 0 && (
               <Button size="sm" variant="success" icon={<Banknote className="h-4 w-4" />} onClick={() => setPayFor(l)}>
-                Pay
+                {t('Pay')}
               </Button>
             )}
             <Button
               size="icon"
               variant="ghost"
-              aria-label="Edit"
+              aria-label={t('Edit')}
               onClick={() => {
                 setEditLabour(l);
                 setLabourOpen(true);
@@ -151,7 +160,7 @@ export default function KarigarDetailPage() {
             >
               <Pencil className="h-4 w-4" />
             </Button>
-            <Button size="icon" variant="ghost" aria-label="Delete" className="text-red-600 hover:bg-red-50" onClick={() => onDeleteLabour(l)}>
+            <Button size="icon" variant="ghost" aria-label={t('Delete')} className="text-red-600 hover:bg-red-50" onClick={() => onDeleteLabour(l)}>
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
@@ -166,17 +175,17 @@ export default function KarigarDetailPage() {
         back="/karigar"
         title={
           <span className="inline-flex items-center gap-2">
-            {k.name} {k.active === false && <Badge>Inactive</Badge>}
+            {k.name} {k.active === false && <Badge>{t('Inactive')}</Badge>}
           </span>
         }
-        subtitle={k.skill || 'Karigar'}
+        subtitle={k.skill ? t(k.skill) : t('Worker')}
         actions={
           <>
             <Button variant="outline" size="sm" icon={<Pencil className="h-4 w-4" />} onClick={() => setEditOpen(true)}>
-              Edit
+              {t('Edit')}
             </Button>
             <Button variant="ghost" size="sm" icon={<Trash2 className="h-4 w-4" />} onClick={onDelete} className="text-red-600 hover:bg-red-50">
-              Delete
+              {t('Delete')}
             </Button>
           </>
         }
@@ -193,24 +202,29 @@ export default function KarigarDetailPage() {
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2">
               <LinkButton href={`tel:${k.phone}`} target="_self" variant="outline" size="sm" icon={<Phone className="h-4 w-4" />}>
-                Call
+                {t('Call')}
               </LinkButton>
               <a
-                href={waLink(k.phone, `Namaste ${k.name} ji,`)}
+                href={waLink(k.phone, t('Hello {name},', { name: k.name }))}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex h-8 items-center justify-center rounded-xl bg-[#25D366] px-3 text-sm font-medium text-white hover:brightness-95"
               >
-                WhatsApp
+                {t('WhatsApp')}
               </a>
             </div>
           </Card>
 
           <div className="grid grid-cols-2 gap-3">
-            <StatCard label="Chalu jobs" value={activeJobs.length} tone="blue" />
-            <StatCard label="Delivered jobs" value={doneJobs} tone="green" />
-            <StatCard label="Labour total" value={money(totals.amount)} />
-            <StatCard label="Dena baaki" value={money(totals.due)} tone={totals.due > 0 ? 'red' : 'green'} sub={`Diya ${money(totals.paid)}`} />
+            <StatCard label={t('Jobs in progress')} value={activeJobs.length} tone="blue" />
+            <StatCard label={t('Delivered jobs')} value={doneJobs} tone="green" />
+            <StatCard label={t('Labour total')} value={money(totals.amount)} />
+            <StatCard
+              label={t('To pay')}
+              value={money(totals.due)}
+              tone={totals.due > 0 ? 'red' : 'green'}
+              sub={t('Paid {amount}', { amount: money(totals.paid) })}
+            />
           </div>
 
           <LoginSection karigar={k} />
@@ -218,7 +232,7 @@ export default function KarigarDetailPage() {
 
         <div className="space-y-4 lg:col-span-2">
           <Card>
-            <CardHeader title={`Chalu kaam (${activeJobs.length})`} />
+            <CardHeader title={t('Current jobs ({n})', { n: activeJobs.length })} />
             <div className="p-3">
               {activeJobs.length ? (
                 <div className="grid gap-2.5 sm:grid-cols-2">
@@ -227,14 +241,18 @@ export default function KarigarDetailPage() {
                   ))}
                 </div>
               ) : (
-                <EmptyState icon={<Hammer className="h-6 w-6" />} title="Abhi koi chalu kaam nahi" description="Order banate/edit karte waqt karigar assign karein" />
+                <EmptyState
+                  icon={<Hammer className="h-6 w-6" />}
+                  title={t('No current jobs')}
+                  description={t('Assign workers when you create or edit an order')}
+                />
               )}
             </div>
           </Card>
 
           <Card>
             <CardHeader
-              title="Labour hisaab (per job)"
+              title={t('Labour (per job)')}
               action={
                 <Button
                   size="sm"
@@ -244,7 +262,7 @@ export default function KarigarDetailPage() {
                     setLabourOpen(true);
                   }}
                 >
-                  Entry jodein
+                  {t('Add entry')}
                 </Button>
               }
             />
@@ -253,7 +271,13 @@ export default function KarigarDetailPage() {
                 rows={entries}
                 columns={columns}
                 rowKey={(l) => l.id}
-                empty={<EmptyState icon={<Wallet className="h-6 w-6" />} title="Koi labour entry nahi" description="Har job ki mazdoori yahan jodein" />}
+                empty={
+                  <EmptyState
+                    icon={<Wallet className="h-6 w-6" />}
+                    title={t('No labour entries')}
+                    description={t('Add the labour amount for each job here')}
+                  />
+                }
               />
             </div>
           </Card>
@@ -270,6 +294,7 @@ export default function KarigarDetailPage() {
 /* ------------------------------ Login ------------------------------ */
 
 function LoginSection({ karigar }: { karigar: Karigar }) {
+  const t = useT();
   const [f, setF] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -300,7 +325,7 @@ function LoginSection({ karigar }: { karigar: Karigar }) {
       setCreated({ email: v.data.email.toLowerCase(), password: v.data.password });
       setF({ email: '', password: '' });
       setErrors({});
-      toast.success('Karigar ka login ban gaya');
+      toast.success(t('Worker login created'));
     } catch (e) {
       toast.error(errMsg(e));
     } finally {
@@ -313,7 +338,7 @@ function LoginSection({ karigar }: { karigar: Karigar }) {
     try {
       await setKarigarLoginActive(karigar, next);
       setActive(next);
-      toast.success(next ? 'Login chalu ho gaya' : 'Login band ho gaya');
+      toast.success(next ? t('Login turned on') : t('Login turned off'));
     } catch (e) {
       toast.error(errMsg(e));
     } finally {
@@ -321,29 +346,41 @@ function LoginSection({ karigar }: { karigar: Karigar }) {
     }
   };
 
+  const loginUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/login`;
+
   return (
     <Card>
-      <CardHeader title={<span className="inline-flex items-center gap-2"><KeyRound className="h-4 w-4" /> App login</span>} />
+      <CardHeader
+        title={
+          <span className="inline-flex items-center gap-2">
+            <KeyRound className="h-4 w-4" /> {t('App login')}
+          </span>
+        }
+      />
       <div className="space-y-3 p-4 text-sm">
         {created && (
           <div className="rounded-xl bg-emerald-50 p-3 text-emerald-900">
-            <p className="font-semibold">Yeh email/password karigar ko de dein:</p>
+            <p className="font-semibold">{t('Give this email and password to the worker:')}</p>
             <p className="mt-1">
-              Email: <b>{created.email}</b>
+              {t('Email')}: <b>{created.email}</b>
             </p>
             <p>
-              Password: <b>{created.password}</b>
+              {t('Password')}: <b>{created.password}</b>
             </p>
             <a
               href={waLink(
                 karigar.phone,
-                `WoodBook app login\nLink: ${typeof window !== 'undefined' ? window.location.origin : ''}/login\nEmail: ${created.email}\nPassword: ${created.password}`,
+                t('WoodBook app login\nLink: {url}\nEmail: {email}\nPassword: {password}', {
+                  url: loginUrl,
+                  email: created.email,
+                  password: created.password,
+                }),
               )}
               target="_blank"
               rel="noreferrer"
               className="mt-2 inline-block font-medium underline"
             >
-              WhatsApp par bhejein
+              {t('Send on WhatsApp')}
             </a>
           </div>
         )}
@@ -351,48 +388,50 @@ function LoginSection({ karigar }: { karigar: Karigar }) {
           <>
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-[11px] uppercase tracking-wide text-wood-500">Email</p>
+                <p className="text-[11px] uppercase tracking-wide text-wood-500">{t('Email')}</p>
                 <p className="truncate font-medium">{karigar.email}</p>
               </div>
-              {active === null ? <Badge>...</Badge> : active ? <Badge tone="green">Chalu</Badge> : <Badge tone="red">Band</Badge>}
+              {active === null ? <Badge>...</Badge> : active ? <Badge tone="green">{t('On')}</Badge> : <Badge tone="red">{t('Off')}</Badge>}
             </div>
-            <p className="text-xs text-wood-600">Karigar sirf apne assign kiye gaye kaam dekh sakta hai - price/payment nahi.</p>
+            <p className="text-xs text-wood-600">{t('Workers can only see jobs assigned to them - no prices or payments.')}</p>
             {active !== null &&
               (active ? (
                 <Button variant="outline" className="w-full" loading={toggling} onClick={() => toggle(false)}>
-                  Login band karein
+                  {t('Turn off login')}
                 </Button>
               ) : (
                 <Button className="w-full" loading={toggling} onClick={() => toggle(true)}>
-                  Login chalu karein
+                  {t('Turn on login')}
                 </Button>
               ))}
           </>
         ) : (
           <>
-            <p className="text-xs text-wood-600">Login banane par karigar apne phone par apna kaam dekh sakega aur stage/photo update kar sakega.</p>
-            <Field label="Email" error={errors.email}>
+            <p className="text-xs text-wood-600">
+              {t('With a login, the worker can see their jobs on their phone and update the stage and photos.')}
+            </p>
+            <Field label={t('Email')} error={errors.email}>
               <Input
                 type="email"
                 autoComplete="off"
                 value={f.email}
                 onChange={(e) => setF({ ...f, email: e.target.value })}
                 invalid={!!errors.email}
-                placeholder="karigar@example.com"
+                placeholder="worker@example.com"
               />
             </Field>
-            <Field label="Password" error={errors.password}>
+            <Field label={t('Password')} error={errors.password}>
               <Input
                 type="text"
                 autoComplete="new-password"
                 value={f.password}
                 onChange={(e) => setF({ ...f, password: e.target.value })}
                 invalid={!!errors.password}
-                placeholder="Kam se kam 6 character"
+                placeholder={t('At least 6 characters')}
               />
             </Field>
             <Button className="w-full" loading={saving} onClick={create} icon={<KeyRound className="h-4 w-4" />}>
-              Login banayein
+              {t('Create login')}
             </Button>
           </>
         )}
@@ -404,6 +443,7 @@ function LoginSection({ karigar }: { karigar: Karigar }) {
 /* ------------------------------ Labour modal ------------------------------ */
 
 function LabourModal({ open, onClose, karigar, entry }: { open: boolean; onClose: () => void; karigar: Karigar; entry: Labour | null }) {
+  const t = useT();
   const { orders, orderById } = useData();
   const [f, setF] = useState({ orderId: '', amount: '', paid: '0', note: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -424,22 +464,25 @@ function LabourModal({ open, onClose, karigar, entry }: { open: boolean; onClose
   const options = useMemo(() => {
     const mine = orders.filter((o) => (o.karigarIds || []).includes(karigar.id));
     const others = orders.filter((o) => !(o.karigarIds || []).includes(karigar.id));
-    return [...mine, ...others].map((o) => ({
-      value: o.id,
-      label: `${o.orderNo} · ${o.itemType} · ${o.customerName}${(o.karigarIds || []).includes(karigar.id) ? '' : ' (assign nahi)'}`,
-    }));
-  }, [orders, karigar.id]);
+    return [...mine, ...others].map((o) => {
+      const base = `${o.orderNo} · ${t(o.itemType)} · ${o.customerName}`;
+      return {
+        value: o.id,
+        label: (o.karigarIds || []).includes(karigar.id) ? base : t('{order} (not assigned)', { order: base }),
+      };
+    });
+  }, [orders, karigar.id, t]);
 
   const save = async () => {
     const v = validate(labourSchema, { ...f, karigarId: karigar.id });
     if (!v.ok) return setErrors(v.errors);
-    if (v.data.paid > v.data.amount) return setErrors({ paid: 'Diya hua amount se zyada nahi ho sakta' });
+    if (v.data.paid > v.data.amount) return setErrors({ paid: t('Paid cannot be more than the amount') });
     const order = orderById[v.data.orderId];
-    if (!order) return setErrors({ orderId: 'Order nahi mila' });
+    if (!order) return setErrors({ orderId: t('Order not found') });
     setSaving(true);
     try {
       await saveLabour(v.data, { karigar, order }, entry?.id);
-      toast.success(entry ? 'Entry update ho gayi' : 'Labour entry jud gayi');
+      toast.success(entry ? t('Entry updated') : t('Labour entry added'));
       onClose();
     } catch (e) {
       toast.error(errMsg(e));
@@ -452,38 +495,38 @@ function LabourModal({ open, onClose, karigar, entry }: { open: boolean; onClose
     <Modal
       open={open}
       onClose={onClose}
-      title={entry ? 'Labour entry edit' : `Labour entry · ${karigar.name}`}
+      title={entry ? t('Edit labour entry') : t('Labour entry · {name}', { name: karigar.name })}
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
-            Cancel
+            {t('Cancel')}
           </Button>
           <Button onClick={save} loading={saving}>
-            Save
+            {t('Save')}
           </Button>
         </>
       }
     >
       <div className="space-y-3">
-        <Field label="Order" required error={errors.orderId}>
+        <Field label={t('Order')} required error={errors.orderId}>
           <Select
             value={f.orderId}
             onChange={(e) => setF({ ...f, orderId: e.target.value })}
             invalid={!!errors.orderId}
-            placeholder="Order chunein"
+            placeholder={t('Select an order')}
             options={options}
           />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Mazdoori (₹)" required error={errors.amount}>
+          <Field label={t('Labour amount (₹)')} required error={errors.amount}>
             <Input type="number" inputMode="decimal" value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value })} invalid={!!errors.amount} />
           </Field>
-          <Field label="Diya (₹)" error={errors.paid}>
+          <Field label={t('Paid (₹)')} error={errors.paid}>
             <Input type="number" inputMode="decimal" value={f.paid} onChange={(e) => setF({ ...f, paid: e.target.value })} invalid={!!errors.paid} />
           </Field>
         </div>
-        <Field label="Note">
-          <Input value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} placeholder="Polish ka kaam, 2 din..." />
+        <Field label={t('Note')}>
+          <Input value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} placeholder={t('Polish work, 2 days...')} />
         </Field>
       </div>
     </Modal>
@@ -491,6 +534,7 @@ function LabourModal({ open, onClose, karigar, entry }: { open: boolean; onClose
 }
 
 function PayLabourModal({ entry, onClose }: { entry: Labour | null; onClose: () => void }) {
+  const t = useT();
   const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -506,12 +550,12 @@ function PayLabourModal({ entry, onClose }: { entry: Labour | null; onClose: () 
   const save = async () => {
     if (!entry) return;
     const n = Number(amount);
-    if (!amount || Number.isNaN(n) || n <= 0) return setError('Amount daalein');
-    if (n > due + 0.5) return setError(`Baaki sirf ${money(due)} hai`);
+    if (!amount || Number.isNaN(n) || n <= 0) return setError(t('Enter an amount'));
+    if (n > due + 0.5) return setError(t('Only {amount} is due', { amount: money(due) }));
     setSaving(true);
     try {
       await payLabour(entry, n);
-      toast.success(`${money(n)} diya - ${entry.karigarName}`);
+      toast.success(t('Paid {amount} to {name}', { amount: money(n), name: entry.karigarName }));
       onClose();
     } catch (e) {
       toast.error(errMsg(e));
@@ -524,15 +568,15 @@ function PayLabourModal({ entry, onClose }: { entry: Labour | null; onClose: () 
     <Modal
       open={!!entry}
       onClose={onClose}
-      title="Karigar ko payment"
+      title={t('Pay worker')}
       size="sm"
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
-            Cancel
+            {t('Cancel')}
           </Button>
           <Button variant="success" onClick={save} loading={saving}>
-            Pay
+            {t('Pay')}
           </Button>
         </>
       }
@@ -540,10 +584,10 @@ function PayLabourModal({ entry, onClose }: { entry: Labour | null; onClose: () 
       {entry && (
         <div className="space-y-3 text-sm">
           <p>
-            {entry.orderNo} · {entry.itemType} · Baaki <b className="text-red-600">{money(due)}</b>
+            {entry.orderNo} · {t(entry.itemType)} · {t('Due')} <b className="text-red-600">{money(due)}</b>
           </p>
-          <p className="text-xs text-wood-600">Added on {fmtDate(entry.createdAt)}</p>
-          <Field label="Amount (₹)" error={error}>
+          <p className="text-xs text-wood-600">{t('Added on {date}', { date: fmtDate(entry.createdAt) })}</p>
+          <Field label={t('Amount (₹)')} error={error}>
             <Input type="number" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} invalid={!!error} autoFocus />
           </Field>
         </div>

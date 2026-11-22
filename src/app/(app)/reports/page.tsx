@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { Download, IndianRupee, Receipt, TrendingUp, Wallet } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useData } from '@/lib/data';
+import { useT } from '@/lib/i18n';
 import { cn, downloadCSV, money, num } from '@/lib/utils';
 import { Badge, Button, Card, CardHeader, DataTable, EmptyState, PageHeader, PageLoader, Select, StatCard } from '@/components/ui';
 
@@ -21,9 +22,10 @@ interface MonthRow {
 }
 
 function CsvButton({ onClick }: { onClick: () => void }) {
+  const t = useT();
   return (
     <Button variant="outline" size="sm" icon={<Download className="h-3.5 w-3.5" />} onClick={onClick}>
-      CSV
+      {t('CSV')}
     </Button>
   );
 }
@@ -40,6 +42,7 @@ function Bar({ value, max, className }: { value: number; max: number; className?
 export default function ReportsPage() {
   const { isOwner } = useAuth();
   const { loading, orders, finance, payments, expenses, karigars, labour, settings } = useData();
+  const t = useT();
   const thisYear = new Date().getFullYear();
   const [year, setYear] = useState(thisYear);
   const [month, setMonth] = useState<number | 'all'>('all');
@@ -182,8 +185,8 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Reports"
-        subtitle={`Hisaab-kitaab · ${periodLabel}`}
+        title={t('Reports')}
+        subtitle={t('Business summary · {period}', { period: periodLabel })}
         actions={
           <>
             <Select
@@ -191,36 +194,36 @@ export default function ReportsPage() {
               onChange={(e) => setYear(Number(e.target.value))}
               className="w-28"
               options={years.map((y) => ({ value: String(y), label: String(y) }))}
-              aria-label="Saal"
+              aria-label={t('Year')}
             />
             <Select
               value={String(month)}
               onChange={(e) => setMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
               className="w-36"
-              options={[{ value: 'all', label: 'Poora saal' }, ...MONTHS.map((m, i) => ({ value: String(i), label: m }))]}
-              aria-label="Mahina"
+              options={[{ value: 'all', label: t('Full year') }, ...MONTHS.map((m, i) => ({ value: String(i), label: m }))]}
+              aria-label={t('Month')}
             />
           </>
         }
       />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label="Orders" value={num(data.total.orders)} icon={<TrendingUp className="h-5 w-5" />} sub={`Value ${money(data.total.value)}`} />
-        <StatCard label="Income mila" value={money(data.total.income)} icon={<Wallet className="h-5 w-5" />} tone="green" />
-        <StatCard label="Kharcha" value={money(data.total.expenses)} icon={<Receipt className="h-5 w-5" />} tone="amber" />
+        <StatCard label={t('Orders')} value={num(data.total.orders)} icon={<TrendingUp className="h-5 w-5" />} sub={t('Value {amount}', { amount: money(data.total.value) })} />
+        <StatCard label={t('Income received')} value={money(data.total.income)} icon={<Wallet className="h-5 w-5" />} tone="green" />
+        <StatCard label={t('Expenses')} value={money(data.total.expenses)} icon={<Receipt className="h-5 w-5" />} tone="amber" />
         <StatCard
-          label="Net (income - kharcha)"
+          label={t('Net (income - expenses)')}
           value={money(data.total.net)}
           icon={<IndianRupee className="h-5 w-5" />}
           tone={data.total.net < 0 ? 'red' : 'green'}
-          sub={`Kul baaki: ${money(dues.total)}`}
+          sub={t('Total due: {amount}', { amount: money(dues.total) })}
         />
       </div>
 
       {/* Monthly */}
       <Card>
         <CardHeader
-          title={`Mahine wise - ${year}`}
+          title={t('Month-wise - {year}', { year })}
           action={
             <CsvButton
               onClick={() =>
@@ -243,7 +246,7 @@ export default function ReportsPage() {
                   'group flex h-full flex-1 flex-col items-center justify-end gap-1 rounded-lg pb-0.5',
                   month === r.month && 'bg-wood-50',
                 )}
-                title={`${r.label}: income ${money(r.income)}, kharcha ${money(r.expenses)}`}
+                title={t('{month}: income {income}, expenses {expenses}', { month: r.label, income: money(r.income), expenses: money(r.expenses) })}
               >
                 <div className="flex h-full w-full items-end justify-center gap-0.5">
                   <div className="w-1/2 max-w-[14px] rounded-t bg-emerald-500" style={{ height: `${(r.income / data.maxBar) * 100}%` }} />
@@ -257,12 +260,12 @@ export default function ReportsPage() {
           </div>
           <div className="mt-2 flex items-center gap-4 text-xs text-wood-600">
             <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" /> Income
+              <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" /> {t('Income')}
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-sm bg-wood-400" /> Kharcha
+              <span className="h-2.5 w-2.5 rounded-sm bg-wood-400" /> {t('Expenses')}
             </span>
-            <span className="ml-auto">Mahine par tap karke filter karein</span>
+            <span className="ml-auto">{t('Tap a month to filter')}</span>
           </div>
         </div>
         <div className="p-4">
@@ -272,14 +275,14 @@ export default function ReportsPage() {
             onRowClick={(r) => setMonth(month === r.month ? 'all' : r.month)}
             rowClassName={(r) => (month === r.month ? 'bg-wood-50' : undefined)}
             columns={[
-              { key: 'm', header: 'Month', cell: (r) => r.label },
-              { key: 'o', header: 'Orders', cell: (r) => num(r.orders), align: 'right' },
-              { key: 'v', header: 'Order value', cell: (r) => money(r.value), align: 'right' },
-              { key: 'i', header: 'Income', cell: (r) => <span className="text-emerald-700">{money(r.income)}</span>, align: 'right' },
-              { key: 'e', header: 'Kharcha', cell: (r) => money(r.expenses), align: 'right' },
+              { key: 'm', header: t('Month'), cell: (r) => r.label },
+              { key: 'o', header: t('Orders'), cell: (r) => num(r.orders), align: 'right' },
+              { key: 'v', header: t('Order value'), cell: (r) => money(r.value), align: 'right' },
+              { key: 'i', header: t('Income'), cell: (r) => <span className="text-emerald-700">{money(r.income)}</span>, align: 'right' },
+              { key: 'e', header: t('Expenses'), cell: (r) => money(r.expenses), align: 'right' },
               {
                 key: 'n',
-                header: 'Net',
+                header: t('Net'),
                 cell: (r) => <span className={cn('font-semibold', r.net < 0 ? 'text-red-600' : 'text-wood-950')}>{money(r.net)}</span>,
                 align: 'right',
               },
@@ -294,7 +297,7 @@ export default function ReportsPage() {
           <CardHeader
             title={
               <span className="flex items-center gap-2">
-                Baaki payment (dues) <Badge tone="red">{money(dues.total)}</Badge>
+                {t('Pending dues')} <Badge tone="red">{money(dues.total)}</Badge>
               </span>
             }
             action={
@@ -312,21 +315,21 @@ export default function ReportsPage() {
             <DataTable
               rows={dues.list.slice(0, 15)}
               rowKey={(r) => r.id}
-              empty={<EmptyState title="Koi due nahi 🎉" className="py-8" />}
+              empty={<EmptyState title={t('No dues') + ' 🎉'} className="py-8" />}
               columns={[
-                { key: 'n', header: 'Grahak', cell: (r) => r.name },
-                { key: 'o', header: 'Orders', cell: (r) => r.orders, align: 'right' },
-                { key: 'd', header: 'Baaki', cell: (r) => <span className="font-semibold text-red-600">{money(r.due)}</span>, align: 'right' },
+                { key: 'n', header: t('Customer'), cell: (r) => r.name },
+                { key: 'o', header: t('Orders'), cell: (r) => r.orders, align: 'right' },
+                { key: 'd', header: t('Due'), cell: (r) => <span className="font-semibold text-red-600">{money(r.due)}</span>, align: 'right' },
               ]}
             />
-            {dues.list.length > 15 && <p className="mt-2 text-xs text-wood-600">+{dues.list.length - 15} aur grahak - CSV mein poori list</p>}
+            {dues.list.length > 15 && <p className="mt-2 text-xs text-wood-600">{t('+{n} more customers - full list in CSV', { n: dues.list.length - 15 })}</p>}
           </div>
         </Card>
 
         {/* Expenses by category */}
         <Card>
           <CardHeader
-            title={`Kharcha category wise · ${periodLabel}`}
+            title={t('Expenses by category · {period}', { period: periodLabel })}
             action={
               <CsvButton
                 onClick={() =>
@@ -343,7 +346,7 @@ export default function ReportsPage() {
               expCats.list.map((x) => (
                 <div key={x.category}>
                   <div className="mb-1 flex items-center justify-between text-sm">
-                    <span className="font-medium text-wood-900">{x.category}</span>
+                    <span className="font-medium text-wood-900">{t(x.category)}</span>
                     <span className="text-wood-700">
                       {money(x.amount)}{' '}
                       <span className="text-xs text-wood-500">({expCats.total ? Math.round((x.amount / expCats.total) * 100) : 0}%)</span>
@@ -353,7 +356,7 @@ export default function ReportsPage() {
                 </div>
               ))
             ) : (
-              <EmptyState title="Is period mein koi kharcha nahi" className="py-8" />
+              <EmptyState title={t('No expenses in this period')} className="py-8" />
             )}
           </div>
         </Card>
@@ -363,12 +366,12 @@ export default function ReportsPage() {
         {/* Karigar workload */}
         <Card>
           <CardHeader
-            title="Karigar workload"
+            title={t('Worker workload')}
             action={
               <CsvButton
                 onClick={() =>
                   downloadCSV(`woodbook-karigar-${fileTag}.csv`, [
-                    ['Karigar', 'Skill', 'Active jobs', `Completed (${periodLabel})`, 'Labour total', 'Paid', 'Due'],
+                    ['Worker', 'Skill', 'Active jobs', `Completed (${periodLabel})`, 'Labour total', 'Paid', 'Due'],
                     ...workload.map((w) => [w.name, w.skill, w.active, w.completed, w.total, w.paid, w.due]),
                   ])
                 }
@@ -379,11 +382,11 @@ export default function ReportsPage() {
             <DataTable
               rows={workload}
               rowKey={(r) => r.id}
-              empty={<EmptyState title="Koi karigar nahi" className="py-8" />}
+              empty={<EmptyState title={t('No workers yet')} className="py-8" />}
               columns={[
                 {
                   key: 'n',
-                  header: 'Karigar',
+                  header: t('Worker'),
                   cell: (r) => (
                     <div className="min-w-[8rem]">
                       <p className="font-medium">{r.name}</p>
@@ -393,12 +396,12 @@ export default function ReportsPage() {
                     </div>
                   ),
                 },
-                { key: 'a', header: 'Active', cell: (r) => r.active, align: 'right' },
-                { key: 'c', header: 'Complete', cell: (r) => r.completed, align: 'right' },
-                { key: 't', header: 'Labour', cell: (r) => money(r.total), align: 'right' },
+                { key: 'a', header: t('Active'), cell: (r) => r.active, align: 'right' },
+                { key: 'c', header: t('Completed'), cell: (r) => r.completed, align: 'right' },
+                { key: 't', header: t('Labour'), cell: (r) => money(r.total), align: 'right' },
                 {
                   key: 'd',
-                  header: 'Due',
+                  header: t('Due'),
                   cell: (r) => <span className={r.due > 0 ? 'font-semibold text-red-600' : ''}>{money(r.due)}</span>,
                   align: 'right',
                 },
@@ -410,7 +413,7 @@ export default function ReportsPage() {
         {/* Item types */}
         <Card>
           <CardHeader
-            title={`Item type wise · ${periodLabel}`}
+            title={t('By item type · {period}', { period: periodLabel })}
             action={
               <CsvButton
                 onClick={() =>
@@ -428,7 +431,7 @@ export default function ReportsPage() {
                 <div key={x.item}>
                   <div className="mb-1 flex items-center justify-between text-sm">
                     <span className="font-medium text-wood-900">
-                      {x.item} <span className="text-xs text-wood-500">x{x.count}</span>
+                      {t(x.item)} <span className="text-xs text-wood-500">x{x.count}</span>
                     </span>
                     <span className="text-wood-700">{money(x.value)}</span>
                   </div>
@@ -436,7 +439,7 @@ export default function ReportsPage() {
                 </div>
               ))
             ) : (
-              <EmptyState title="Is period mein koi order nahi" className="py-8" />
+              <EmptyState title={t('No orders in this period')} className="py-8" />
             )}
           </div>
         </Card>

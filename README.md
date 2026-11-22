@@ -2,7 +2,9 @@
 
 *by Brighton Solution*
 
-WoodBook manages a furniture workshop: orders with naap (measurements), karigars, stages, delivery, payments, stock, expenses and reports. It is an installable PWA, mobile-first, and also works on desktop.
+WoodBook manages a furniture workshop: orders with measurements, workers, stages, deliveries, payments, stock, expenses and reports. It is an installable PWA, mobile-first, and also works on desktop.
+
+**Language:** English is the default. Hinglish is optional, and each device can switch through the language toggle (sidebar, login page or Settings → Language). Translations live in `src/i18n/hi-*.ts`, keyed by the English text that `t()` uses.
 
 **Stack:** Next.js 15 (App Router) · TypeScript · Tailwind CSS · Firebase Auth, Firestore and Storage · zod · sonner
 
@@ -44,22 +46,27 @@ npm run build      # production build
 npm start
 ```
 
-## 3. First login and roles
+## 3. Admin login and roles
 
-- **The first account created** on the login page ("Owner account banayein") becomes the **Owner**. Create it right after you deploy.
-- **Karigar login:** Owner → Karigar → open a karigar → *Login banayein* (email and password). Give those details to the karigar.
-  - A karigar sees only the jobs assigned to them, can change the stage and upload progress photos.
-  - A karigar never sees prices or payments. Firestore rules enforce this, because money data lives in the separate owner-only `finance` and `payments` collections.
-- An account that signs up later without an invite sees "Account active nahi hai".
+Create the admin login once from the CLI. `--demo` and the worker options are optional:
+
+```bash
+npm run setup:admin -- --email admin@example.com --password "StrongPass1" --name "Admin" \
+  --demo --worker-email worker@example.com --worker-password "StrongPass2"
+```
+
+You can also sign in on a fresh project with **Set up admin account**. That link only appears until an admin exists.
+
+- **Admin (owner):** has full access.
+- **Worker login:** Admin → Workers → open a worker → **Create login** (email and password). Give those details to the worker.
+  - A worker sees only the jobs assigned to them, and can change the stage and upload progress photos.
+  - A worker never sees prices, payments or customers. Firestore rules enforce this, because money data lives in the admin-only `finance` and `payments` collections.
+- **Changing a password:** Settings → **Change password**.
 
 ## 4. Demo data
 
-- **From the app:** Settings → *Demo data daalein*.
-- **From the CLI:** put `SEED_EMAIL` and `SEED_PASSWORD` (the owner login) in `.env.local`, then run:
-
-```bash
-npm run seed
-```
+- **From the app:** Settings → **Load demo data**, or **Remove demo data** to clear it.
+- **From the CLI:** `npm run setup:admin -- ... --demo`, or put `SEED_EMAIL` and `SEED_PASSWORD` in `.env.local` and run `npm run seed`.
 
 ## 5. Deploy (Firebase Hosting)
 
@@ -84,17 +91,17 @@ npm run deploy:all    # build + deploy auth providers, Firestore rules/indexes, 
 | Module | Route |
 |---|---|
 | Dashboard (today/week deliveries, overdue, in progress, ready, pending payments) | `/` |
-| Orders (naap ft/inch, design photos, lakdi, price/advance/balance, stages, karigar) | `/orders` |
-| Kaam kahan tak (board by stage / karigar) | `/board` |
-| Delivery (countdown list + calendar) | `/delivery` |
-| Grahak (customers, history, paid/due) | `/customers` |
+| Orders (measurements ft/inch, design photos, wood/material, price/advance/balance, stages, workers) | `/orders` |
+| Work Progress (board by stage / worker) | `/board` |
+| Deliveries (countdown list + calendar) | `/delivery` |
+| Customers (history, paid/due) | `/customers` |
 | Payments (advance + instalments, dues, receipts) | `/payments` |
-| Karigar (skills, active jobs, labour paid/due, login) | `/karigar` |
+| Workers (skills, active jobs, labour paid/due, login) | `/karigar` |
 | Stock (in/out, material per order, low-stock) | `/stock` |
-| Kharcha (expenses) | `/expenses` |
+| Expenses | `/expenses` |
 | Reports (monthly, CSV export) | `/reports` |
 | Settings (profile, logo, GST, item/wood types, stages, trash, demo data) | `/settings` |
-| Karigar app | `/jobs` |
+| Worker app (My Jobs) | `/jobs` |
 | Public status page (WhatsApp share) | `/status/[token]` |
 | Print bill / estimate / receipt (Print → Save as PDF) | `/print/bill/[id]`, `/print/receipt/[id]` |
 

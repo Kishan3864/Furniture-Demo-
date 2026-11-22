@@ -6,11 +6,13 @@ import { ClipboardList, Search, Users, X } from 'lucide-react';
 import { useData } from '@/lib/data';
 import { money } from '@/lib/utils';
 import { Badge, DeliveryBadge } from './ui';
+import { useT } from '@/lib/i18n';
 
 export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { customers, orders, finance, settings } = useData();
   const router = useRouter();
   const [q, setQ] = useState('');
+  const t = useT();
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -69,17 +71,17 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
             ref={inputRef}
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Naam, phone, order no. (WB-0012) ya item..."
+            placeholder={t('Name, phone, order no. (WB-0012) or item...')}
             className="h-14 flex-1 bg-transparent text-base outline-none placeholder:text-wood-400"
           />
-          <button onClick={onClose} className="rounded-lg p-1.5 text-wood-600 hover:bg-wood-100" aria-label="Close">
+          <button onClick={onClose} className="rounded-lg p-1.5 text-wood-600 hover:bg-wood-100" aria-label={t('Close')}>
             <X className="h-5 w-5" />
           </button>
         </div>
         <div className="overflow-y-auto p-2">
           {results.c.length > 0 && (
             <div className="mb-2">
-              <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-wood-500">Grahak</p>
+              <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-wood-500">{t('Customers')}</p>
               {results.c.map((c) => (
                 <button
                   key={c.id}
@@ -98,7 +100,7 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
           {results.o.length > 0 && (
             <div>
               <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-wood-500">
-                {q ? 'Orders' : 'Recent orders'}
+                {q ? t('Orders') : t('Recent orders')}
               </p>
               {results.o.map((o) => (
                 <button
@@ -109,12 +111,12 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
                   <ClipboardList className="h-4 w-4 shrink-0 text-wood-500" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium text-wood-950">
-                      {o.orderNo} · {o.itemType}
+                      {o.orderNo} · {t(o.itemType)}
                       {o.title ? ` - ${o.title}` : ''}
                     </p>
                     <p className="truncate text-xs text-wood-600">
-                      {o.customerName} · {o.stage}
-                      {finance[o.id]?.balance ? ` · Baaki ${money(finance[o.id].balance)}` : ''}
+                      {o.customerName} · {t(o.stage)}
+                      {finance[o.id]?.balance ? ` · ${t('Due {amount}', { amount: money(finance[o.id].balance) })}` : ''}
                     </p>
                   </div>
                   <DeliveryBadge date={o.deliveryDate} delivered={o.stageIndex >= lastIdx} />
@@ -124,7 +126,7 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
           )}
           {q && !results.c.length && !results.o.length && (
             <div className="px-3 py-10 text-center text-sm text-wood-600">
-              &quot;{q}&quot; ke liye kuch nahi mila <Badge className="ml-1">Try phone number</Badge>
+              {t('Nothing found for "{q}"', { q })} <Badge className="ml-1">{t('Try a phone number')}</Badge>
             </div>
           )}
         </div>

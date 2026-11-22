@@ -18,6 +18,7 @@ import {
 } from 'react';
 import { ArrowLeft, Inbox, Loader2, Search, X } from 'lucide-react';
 import { cn, daysLeft } from '@/lib/utils';
+import { useT } from '@/lib/i18n';
 import { StoredImg } from './stored-image';
 
 /* ------------------------------ Button ------------------------------ */
@@ -118,6 +119,7 @@ export function Field({
   className?: string;
   required?: boolean;
 }) {
+  const t = useT();
   return (
     <label className={cn('block', className)}>
       {label && (
@@ -128,9 +130,9 @@ export function Field({
       )}
       {children}
       {error ? (
-        <span className="mt-1 block text-xs text-red-600">{error}</span>
+        <span className="mt-1 block text-xs text-red-600">{t(error)}</span>
       ) : hint ? (
-        <span className="mt-1 block text-xs text-wood-600/80">{hint}</span>
+        <span className="mt-1 block text-xs text-wood-600/80">{typeof hint === 'string' ? t(hint) : hint}</span>
       ) : null}
     </label>
   );
@@ -260,7 +262,7 @@ export function Segmented<T extends string>({
 export function SearchInput({
   value,
   onChange,
-  placeholder = 'Search...',
+  placeholder,
   className,
 }: {
   value: string;
@@ -268,16 +270,17 @@ export function SearchInput({
   placeholder?: string;
   className?: string;
 }) {
+  const t = useT();
   return (
     <div className={cn('relative', className)}>
       <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-wood-400" />
-      <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="pl-9 pr-8" />
+      <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder ?? t('Search...')} className="pl-9 pr-8" />
       {value && (
         <button
           type="button"
           onClick={() => onChange('')}
           className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-wood-400 hover:text-wood-700"
-          aria-label="Clear"
+          aria-label={t('Clear')}
         >
           <X className="h-4 w-4" />
         </button>
@@ -389,11 +392,12 @@ export function Spinner({ className }: { className?: string }) {
   return <Loader2 className={cn('h-5 w-5 animate-spin text-wood-600', className)} />;
 }
 
-export function PageLoader({ label = 'Load ho raha hai...' }: { label?: string }) {
+export function PageLoader({ label }: { label?: string }) {
+  const t = useT();
   return (
     <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-wood-600">
       <Spinner className="h-7 w-7" />
-      <span className="text-sm">{label}</span>
+      <span className="text-sm">{label ?? t('Loading...')}</span>
     </div>
   );
 }
@@ -469,20 +473,22 @@ export function StatCard({
 /* ------------------------------ Delivery countdown ------------------------------ */
 
 export function DeliveryBadge({ date, delivered }: { date?: string; delivered?: boolean }) {
-  if (delivered) return <Badge tone="green">Delivered</Badge>;
+  const t = useT();
+  if (delivered) return <Badge tone="green">{t('Delivered')}</Badge>;
   const d = daysLeft(date);
   if (d === null) return <Badge>-</Badge>;
-  if (d < 0) return <Badge tone="red">Overdue {Math.abs(d)} DIN</Badge>;
-  if (d === 0) return <Badge tone="amber">Aaj</Badge>;
-  if (d === 1) return <Badge tone="amber">Kal</Badge>;
-  if (d <= 7) return <Badge tone="blue">{d} DIN</Badge>;
-  return <Badge tone="gray">{d} DIN</Badge>;
+  if (d < 0) return <Badge tone="red">{t('Overdue {n} DAYS', { n: Math.abs(d) })}</Badge>;
+  if (d === 0) return <Badge tone="amber">{t('Today')}</Badge>;
+  if (d === 1) return <Badge tone="amber">{t('Tomorrow')}</Badge>;
+  if (d <= 7) return <Badge tone="blue">{t('{n} DAYS', { n: d })}</Badge>;
+  return <Badge tone="gray">{t('{n} DAYS', { n: d })}</Badge>;
 }
 
 export function PriorityBadge({ priority }: { priority?: string }) {
-  if (priority === 'urgent') return <Badge tone="red">Urgent</Badge>;
-  if (priority === 'high') return <Badge tone="amber">High</Badge>;
-  if (priority === 'low') return <Badge tone="gray">Low</Badge>;
+  const t = useT();
+  if (priority === 'urgent') return <Badge tone="red">{t('Urgent')}</Badge>;
+  if (priority === 'high') return <Badge tone="amber">{t('High')}</Badge>;
+  if (priority === 'low') return <Badge tone="gray">{t('Low')}</Badge>;
   return null;
 }
 
@@ -555,6 +561,7 @@ interface ConfirmOpts {
 const ConfirmCtx = createContext<(o: ConfirmOpts) => Promise<boolean>>(async () => false);
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {
+  const t = useT();
   const [opts, setOpts] = useState<ConfirmOpts | null>(null);
   const resolver = useRef<((v: boolean) => void) | null>(null);
   const confirm = useCallback((o: ConfirmOpts) => {
@@ -574,15 +581,15 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
       <Modal
         open={!!opts}
         onClose={() => close(false)}
-        title={opts?.title || 'Pakka?'}
+        title={opts?.title || t('Are you sure?')}
         size="sm"
         footer={
           <>
             <Button variant="outline" onClick={() => close(false)}>
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button variant={opts?.danger ? 'danger' : 'primary'} onClick={() => close(true)}>
-              {opts?.confirmText || 'Haan'}
+              {opts?.confirmText || t('Yes')}
             </Button>
           </>
         }
@@ -628,7 +635,7 @@ export function DataTable<T>({
   mobileCard?: (row: T) => ReactNode;
   rowClassName?: (row: T) => string | undefined;
 }) {
-  if (!rows.length) return <>{empty ?? <EmptyState title="Kuch nahi mila" />}</>;
+  if (!rows.length) return <>{empty ?? <NothingFound />}</>;
   const [first, ...rest] = columns;
   const alignCls = (a?: string) => (a === 'right' ? 'text-right' : a === 'center' ? 'text-center' : 'text-left');
   return (
@@ -694,6 +701,11 @@ export function DataTable<T>({
       </div>
     </>
   );
+}
+
+function NothingFound() {
+  const t = useT();
+  return <EmptyState title={t('Nothing found')} />;
 }
 
 /* ------------------------------ Photo grid ------------------------------ */
@@ -795,6 +807,7 @@ export function ImagePickButton({
 
 /** Local preview grid for files not yet uploaded */
 export function FilePreviewGrid({ files, onRemove }: { files: File[]; onRemove: (i: number) => void }) {
+  const t = useT();
   const [urls, setUrls] = useState<string[]>([]);
   useEffect(() => {
     const u = files.map((f) => URL.createObjectURL(f));
@@ -808,7 +821,7 @@ export function FilePreviewGrid({ files, onRemove }: { files: File[]; onRemove: 
         <div key={u} className="relative aspect-square overflow-hidden rounded-xl bg-wood-100 ring-2 ring-dashed ring-wood-300">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={u} alt="" className="h-full w-full object-cover opacity-90" />
-          <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 text-[10px] text-white">Naya</span>
+          <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 text-[10px] text-white">{t('New')}</span>
           <button
             type="button"
             onClick={() => onRemove(i)}

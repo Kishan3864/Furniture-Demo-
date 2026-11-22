@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "deploy": "next build && firebase deploy --only hosting",
     "deploy:all": "next build && firebase deploy --only auth,firestore,hosting",
-    "seed": "node --env-file=.env.local --experimental-strip-types scripts/seed.mts"
+    "setup:admin": "node --env-file=.env.local --experimental-strip-types --no-warnings scripts/setup-admin.mts",
+    "seed":"node --env-file=.env.local --experimental-strip-types scripts/seed.mts"
   },
   "dependencies": {
     "clsx": "^2.1.1",
