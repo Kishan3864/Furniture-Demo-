@@ -6,8 +6,18 @@
   --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Helvetica Neue', Arial, sans-serif;
 }
 
+html,
+body {
+  /* never allow the page to slide sideways */
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
 html {
   -webkit-tap-highlight-color: transparent;
+  /* no pinch / double-tap zoom: behaves like a native app */
+  touch-action: pan-x pan-y;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
@@ -16,8 +26,8 @@ body {
   @apply bg-cream-100 text-wood-950 antialiased;
   font-family: var(--font-sans);
   /* native-app feel: no rubber-band / pull-to-refresh, no double-tap zoom delay */
-  overscroll-behavior-y: none;
-  touch-action: manipulation;
+  overscroll-behavior: none;
+  touch-action: pan-x pan-y;
 }
 
 /* app chrome shouldn't be text-selectable or show the long-press callout */
@@ -86,4 +96,23 @@ select {
     max-width: none !important;
     padding: 0 !important;
   }
+}
+
+/* grid children may shrink below their content (stops long text pushing the page wider) */
+.grid > * {
+  min-width: 0;
+}
+
+/* inputs >= 16px on phones so iOS never zooms on focus */
+@media (max-width: 639px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+img,
+video {
+  max-width: 100%;
 }

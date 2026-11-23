@@ -44,9 +44,9 @@ export function InstallHelpModal() {
   const { helpOpen, setHelpOpen, isIOS } = usePwa();
   const t = useT();
   return (
-    <Modal open={helpOpen} onClose={() => setHelpOpen(false)} title={t('Install WoodBook')} size="sm">
+    <Modal open={helpOpen} onClose={() => setHelpOpen(false)} title={t('Install FurniCraft')} size="sm">
       <div className="space-y-4 text-sm text-wood-900">
-        <p className="text-wood-700">{t('Install once and open WoodBook full screen from your home screen, like a normal app.')}</p>
+        <p className="text-wood-700">{t('Install once and open FurniCraft full screen from your home screen, like a normal app.')}</p>
         {isIOS ? (
           <ol className="space-y-3">
             <Step n={1} icon={<Share className="h-4 w-4" />}>
@@ -56,7 +56,7 @@ export function InstallHelpModal() {
               {t('Scroll down and tap "Add to Home Screen".')}
             </Step>
             <Step n={3} icon={<Smartphone className="h-4 w-4" />}>
-              {t('Tap "Add". WoodBook now appears on your home screen.')}
+              {t('Tap "Add". FurniCraft now appears on your home screen.')}
             </Step>
           </ol>
         ) : (
@@ -121,7 +121,7 @@ export function InstallBanner({ className }: { className?: string }) {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/icon-192.png" alt="" className="h-10 w-10 rounded" />
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-wood-950">{t('Install WoodBook app')}</p>
+        <p className="text-sm font-semibold text-wood-950">{t('Install FurniCraft app')}</p>
         <p className="truncate text-xs text-wood-600">{t('Opens full screen, faster, works offline')}</p>
       </div>
       <Button size="sm" onClick={() => void install().then((ok) => ok && setShow(false))}>

@@ -3,11 +3,11 @@ import './globals.css';
 import Providers from './providers';
 
 export const metadata: Metadata = {
-  title: { default: 'WoodBook', template: '%s · WoodBook' },
+  title: { default: 'FurniCraft', template: '%s · FurniCraft' },
   description: 'Furniture workshop management - orders, measurements, workers, deliveries and payments. By Brighton Solution.',
-  applicationName: 'WoodBook',
+  applicationName: 'FurniCraft',
   manifest: '/manifest.webmanifest',
-  appleWebApp: { capable: true, title: 'WoodBook', statusBarStyle: 'default' },
+  appleWebApp: { capable: true, title: 'FurniCraft', statusBarStyle: 'default' },
   icons: {
     icon: [{ url: '/icon-192.png', sizes: '192x192', type: 'image/png' }],
     apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
@@ -20,6 +20,9 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
+  minimumScale: 1,
+  userScalable: false,
+  interactiveWidget: 'resizes-content',
   viewportFit: 'cover',
 };
 

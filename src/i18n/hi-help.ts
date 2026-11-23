@@ -63,7 +63,7 @@ const dict: Record<string, string> = {
 
   'Tap Install app in the menu.': 'Menu mein App install karein dabayein.',
   'iPhone: Safari → Share → Add to Home Screen.': 'iPhone: Safari → Share → Add to Home Screen.',
-  'Open WoodBook from your home screen like any app.': 'Home screen se normal app ki tarah WoodBook kholein.',
+  'Open FurniCraft from your home screen like any app.': 'Home screen se normal app ki tarah FurniCraft kholein.',
   'Tap Install app.': 'App install karein dabayein.',
 
   // Worker

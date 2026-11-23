@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 
-/** Generates the WoodBook app icon as PNG (used for PWA + apple icon). */
+/** Generates the FurniCraft app icon as PNG (used for PWA + apple icon). */
 export function iconResponse(size: number, maskable = false) {
   const pad = maskable ? 0 : Math.round(size * 0.06);
   const radius = maskable ? 0 : Math.round(size * 0.22);
@@ -39,7 +39,7 @@ export function iconResponse(size: number, maskable = false) {
               lineHeight: 1,
             }}
           >
-            WB
+            FC
           </div>
           <div
             style={{

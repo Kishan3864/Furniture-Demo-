@@ -22,7 +22,7 @@ const jobDetail = (c: TourContext) => (c.firstOrderId ? `/jobs/${c.firstOrderId}
 export const OWNER_TOUR: TourStep[] = [
   {
     id: 'welcome',
-    title: 'Welcome to WoodBook',
+    title: 'Welcome to FurniCraft',
     body: 'This short tour shows the full workflow of your workshop:\nNew order → measurements → work stages → delivery → payment.\n\nUse Next and Back, or press Skip anytime. You can restart the tour from the menu.',
   },
   {
@@ -44,7 +44,7 @@ export const OWNER_TOUR: TourStep[] = [
     route: '/',
     target: 'search',
     title: 'Find anything fast',
-    body: 'Search by customer name, phone number or order number (for example WB-0012).',
+    body: 'Search by customer name, phone number or order number (for example FC-0012).',
   },
   {
     id: 'customers',
@@ -107,7 +107,7 @@ export const OWNER_TOUR: TourStep[] = [
     route: '/orders/new',
     target: 'of-dates',
     title: 'Step 7 – Delivery date & priority',
-    body: 'Set the promised delivery date and priority. WoodBook counts down the days and warns you before a job is late.',
+    body: 'Set the promised delivery date and priority. FurniCraft counts down the days and warns you before a job is late.',
   },
   {
     id: 'of-workers',
@@ -218,7 +218,7 @@ export const OWNER_TOUR: TourStep[] = [
     id: 'install',
     target: 'install',
     title: 'Install the app',
-    body: 'Install WoodBook on your phone or computer. It opens full screen like a normal app, starts faster and keeps working with weak internet.',
+    body: 'Install FurniCraft on your phone or computer. It opens full screen like a normal app, starts faster and keeps working with weak internet.',
   },
   {
     id: 'finish',
@@ -231,7 +231,7 @@ export const WORKER_TOUR: TourStep[] = [
   {
     id: 'w-welcome',
     title: 'Welcome, {name}',
-    body: 'WoodBook shows you only the jobs assigned to you. This quick tour shows how to update your work.',
+    body: 'FurniCraft shows you only the jobs assigned to you. This quick tour shows how to update your work.',
   },
   {
     id: 'w-list',
@@ -265,7 +265,7 @@ export const WORKER_TOUR: TourStep[] = [
     id: 'w-install',
     target: 'install',
     title: 'Install the app',
-    body: 'Install WoodBook on your phone to open it like a normal app.',
+    body: 'Install FurniCraft on your phone to open it like a normal app.',
   },
   {
     id: 'w-finish',

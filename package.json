@@ -1,8 +1,8 @@
 {
-  "name": "woodbook",
+  "name": "furnicraft",
   "version": "1.0.0",
   "private": true,
-  "description": "WoodBook - Furniture workshop management (Brighton Solution)",
+  "description": "FurniCraft - Furniture workshop management (Brighton Solution)",
   "scripts": {
     "dev": "next dev",
     "build": "next build && node scripts/postbuild.mjs",

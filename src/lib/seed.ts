@@ -1,5 +1,5 @@
 /**
- * WoodBook demo data seeder.
+ * FurniCraft demo data seeder.
  * Used by Settings > "Load demo data" and by `npm run seed` (scripts/seed.mts).
  *
  * NOTE: keep runtime imports limited to 'firebase/firestore' (no '@/' aliases,
@@ -363,7 +363,7 @@ export async function seedDemoData(db: Firestore, opts?: { by?: string }): Promi
     const cust = customers[s.c];
     const orderRef = doc(collection(db, 'orders'));
     const id = orderRef.id;
-    const no = `WB-${pad4(orderN++)}`;
+    const no = `FC-${pad4(orderN++)}`;
     orderIds.push(id);
     orderNos.push(no);
     const stageIndex = mapStage(s.stage);

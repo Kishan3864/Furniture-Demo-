@@ -109,7 +109,7 @@ const dict: Record<string, string> = {
 
   Progress: 'Kaam',
   'Recent orders': 'Recent orders',
-  'Name, phone, order no. (WB-0012) or item...': 'Naam, phone, order no. (WB-0012) ya item...',
+  'Name, phone, order no. (FC-0012) or item...': 'Naam, phone, order no. (FC-0012) ya item...',
   'Due {amount}': 'Baaki {amount}',
   'Nothing found for "{q}"': '"{q}" ke liye kuch nahi mila',
   'Try a phone number': 'Phone number try karein',

@@ -66,7 +66,7 @@ export default function StatusPage() {
             <StoredImg src={data.logoUrl} alt="" className="h-12 w-12 rounded-xl bg-white object-contain" />
           ) : (
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-wood-600 to-wood-800 font-extrabold text-cream-50">
-              {data.workshopName?.slice(0, 2).toUpperCase() || 'WB'}
+              {data.workshopName?.slice(0, 2).toUpperCase() || 'FC'}
             </div>
           )}
           <div className="min-w-0">
@@ -160,7 +160,7 @@ export default function StatusPage() {
         )}
 
         <p className="mt-6 text-center text-xs text-wood-500">
-          {t('Last updated: {time}', { time: fmtDateTime(data.updatedAt) })} · Powered by WoodBook
+          {t('Last updated: {time}', { time: fmtDateTime(data.updatedAt) })} · Powered by FurniCraft
         </p>
       </div>
     </div>

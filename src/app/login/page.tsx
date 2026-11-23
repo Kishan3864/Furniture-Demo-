@@ -117,9 +117,9 @@ function LoginInner() {
         <div className="w-full max-w-sm">
           <div className="mb-6 flex flex-col items-center text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-wood-600 to-wood-800 text-xl font-extrabold text-cream-50 shadow-lg shadow-wood-900/20">
-              WB
+              FC
             </div>
-            <h1 className="mt-3 text-2xl font-bold text-wood-950">WoodBook</h1>
+            <h1 className="mt-3 text-2xl font-bold text-wood-950">FurniCraft</h1>
             <p className="text-sm text-wood-600">{t('Furniture workshop management')} · Brighton Solution</p>
           </div>
 

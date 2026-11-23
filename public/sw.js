@@ -1,4 +1,4 @@
-/* WoodBook service worker.
+/* FurniCraft service worker.
  * - Precaches the whole app (pages + JS/CSS) listed in /precache-manifest.json (generated at build)
  *   so the installed app opens instantly and works offline.
  * - Firestore data is cached separately by the Firestore SDK (IndexedDB).

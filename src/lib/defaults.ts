@@ -2,7 +2,7 @@ import type { WorkshopSettings } from './types';
 
 /** Default workshop settings (English). Display code passes these through t() so Hinglish users see translations. */
 export const DEFAULT_SETTINGS: WorkshopSettings = {
-  name: 'WoodBook Workshop',
+  name: 'FurniCraft Workshop',
   tagline: 'Brighton Solution',
   logoUrl: '',
   address: '',

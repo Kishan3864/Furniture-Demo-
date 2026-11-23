@@ -370,7 +370,7 @@ function LoginSection({ karigar }: { karigar: Karigar }) {
             <a
               href={waLink(
                 karigar.phone,
-                t('WoodBook app login\nLink: {url}\nEmail: {email}\nPassword: {password}', {
+                t('FurniCraft app login\nLink: {url}\nEmail: {email}\nPassword: {password}', {
                   url: loginUrl,
                   email: created.email,
                   password: created.password,

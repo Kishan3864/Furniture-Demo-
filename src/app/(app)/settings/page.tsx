@@ -126,7 +126,7 @@ function ProfileSection({ settings }: { settings: WorkshopSettings }) {
             <StoredImg src={settings.logoUrl} alt="Logo" className="h-20 w-20 rounded-2xl border border-wood-100 bg-white object-contain" />
           ) : (
             <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-wood-600 to-wood-800 text-xl font-extrabold text-cream-50">
-              WB
+              FC
             </div>
           )}
           <div className="flex flex-wrap gap-2">
@@ -674,7 +674,7 @@ function AppSection() {
       <CardHeader title={t('App')} />
       <div className="space-y-3 p-4">
         <p className="text-xs text-wood-600">
-          {t('Install WoodBook on your phone or computer. It opens full screen like a normal app, starts faster and keeps working with weak internet.')}
+          {t('Install FurniCraft on your phone or computer. It opens full screen like a normal app, starts faster and keeps working with weak internet.')}
         </p>
         <div className="flex flex-wrap gap-2">
           <InstallButton size="md" variant="primary" />

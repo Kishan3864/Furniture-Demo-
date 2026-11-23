@@ -6,8 +6,8 @@ const dict: Record<string, string> = {
   'Good afternoon': 'Namaste',
   'Good evening': 'Good evening',
   'Your workshop is ready!': 'Workshop taiyaar hai!',
-  'Create your first order, or load demo data to see how WoodBook works. Also add your workshop name, logo and phone in Settings.':
-    'Pehla order banayein, ya demo data daal kar dekhein ki WoodBook kaise kaam karta hai. Settings mein workshop ka naam, logo aur phone bhi daal dein.',
+  'Create your first order, or load demo data to see how FurniCraft works. Also add your workshop name, logo and phone in Settings.':
+    'Pehla order banayein, ya demo data daal kar dekhein ki FurniCraft kaise kaam karta hai. Settings mein workshop ka naam, logo aur phone bhi daal dein.',
   'First Order': 'Pehla Order',
   'Load demo data': 'Demo data daalein',
   "Today's deliveries": 'Aaj ki delivery',

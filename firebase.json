@@ -23,6 +23,15 @@
     ],
     "headers": [
       {
+        "source": "/manifest.webmanifest",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
         "source": "/precache-manifest.json",
         "headers": [
           {

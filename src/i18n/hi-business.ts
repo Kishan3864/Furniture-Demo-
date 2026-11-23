@@ -168,8 +168,8 @@ const dict: Record<string, string> = {
   'Add the labour amount for each job here': 'Har job ki mazdoori yahan jodein',
   'App login': 'App login',
   'Give this email and password to the worker:': 'Yeh email/password karigar ko de dein:',
-  'WoodBook app login\nLink: {url}\nEmail: {email}\nPassword: {password}':
-    'WoodBook app login\nLink: {url}\nEmail: {email}\nPassword: {password}',
+  'FurniCraft app login\nLink: {url}\nEmail: {email}\nPassword: {password}':
+    'FurniCraft app login\nLink: {url}\nEmail: {email}\nPassword: {password}',
   'Worker login created': 'Karigar ka login ban gaya',
   'Login turned on': 'Login chalu ho gaya',
   'Login turned off': 'Login band ho gaya',

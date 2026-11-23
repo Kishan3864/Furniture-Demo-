@@ -205,7 +205,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
               <Compass className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="font-semibold text-wood-950">{t('New to WoodBook?')}</p>
+              <p className="font-semibold text-wood-950">{t('New to FurniCraft?')}</p>
               <p className="mt-0.5 text-sm text-wood-700">{t('Take a quick guided tour of how to add orders, track work, deliver and collect payments.')}</p>
               <div className="mt-3 flex gap-2">
                 <Button size="sm" onClick={start}>

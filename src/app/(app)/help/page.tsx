@@ -127,7 +127,7 @@ const OWNER_GUIDES: Guide[] = [
     icon: <Download className="h-5 w-5" />,
     title: 'Install the app',
     action: 'install',
-    steps: ['Tap Install app in the menu.', 'iPhone: Safari → Share → Add to Home Screen.', 'Open WoodBook from your home screen like any app.'],
+    steps: ['Tap Install app in the menu.', 'iPhone: Safari → Share → Add to Home Screen.', 'Open FurniCraft from your home screen like any app.'],
   },
 ];
 

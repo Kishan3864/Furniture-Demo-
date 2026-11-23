@@ -1,5 +1,5 @@
 /**
- * WoodBook demo data seeder (CLI).
+ * FurniCraft demo data seeder (CLI).
  *
  *   npm run seed
  *

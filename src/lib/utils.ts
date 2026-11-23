@@ -49,7 +49,7 @@ export function num(n?: number | null): string {
 }
 
 export function orderNo(n: number): string {
-  return `WB-${String(n).padStart(4, '0')}`;
+  return `FC-${String(n).padStart(4, '0')}`;
 }
 
 export function receiptNo(n: number): string {

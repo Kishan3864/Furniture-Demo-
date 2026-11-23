@@ -120,7 +120,7 @@ export default function DashboardPage() {
           <EmptyState
             icon={<Sparkles className="h-6 w-6" />}
             title={t('Your workshop is ready!')}
-            description={t('Create your first order, or load demo data to see how WoodBook works. Also add your workshop name, logo and phone in Settings.')}
+            description={t('Create your first order, or load demo data to see how FurniCraft works. Also add your workshop name, logo and phone in Settings.')}
             action={
               <div className="flex flex-wrap justify-center gap-2">
                 <LinkButton href="/orders/new" icon={<Plus className="h-4 w-4" />}>

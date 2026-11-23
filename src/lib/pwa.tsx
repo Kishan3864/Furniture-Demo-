@@ -45,6 +45,14 @@ export function PwaProvider({ children }: { children: ReactNode }) {
     const ua = navigator.userAgent;
     setIOS(/iphone|ipad|ipod/i.test(ua) || (ua.includes('Macintosh') && 'ontouchend' in document));
 
+    // native feel: block pinch-zoom (iOS Safari ignores user-scalable); double-tap zoom is off via CSS touch-action
+    const stopGesture = (e: Event) => e.preventDefault();
+    const stopPinch = (e: TouchEvent) => {
+      if (e.touches.length > 1) e.preventDefault();
+    };
+    document.addEventListener('gesturestart', stopGesture);
+    document.addEventListener('touchmove', stopPinch, { passive: false });
+
     const onPrompt = (e: Event) => {
       e.preventDefault();
       setDeferred(e as BeforeInstallPromptEvent);
@@ -52,11 +60,13 @@ export function PwaProvider({ children }: { children: ReactNode }) {
     const onInstalled = () => {
       setDeferred(null);
       setStandalone(true);
-      toast.success(tr('WoodBook app installed'));
+      toast.success(tr('FurniCraft app installed'));
     };
     window.addEventListener('beforeinstallprompt', onPrompt);
     window.addEventListener('appinstalled', onInstalled);
     return () => {
+      document.removeEventListener('gesturestart', stopGesture);
+      document.removeEventListener('touchmove', stopPinch);
       mq.removeEventListener?.('change', check);
       window.removeEventListener('beforeinstallprompt', onPrompt);
       window.removeEventListener('appinstalled', onInstalled);
@@ -70,7 +80,7 @@ export function PwaProvider({ children }: { children: ReactNode }) {
     let refreshing = false;
     const onChange = () => {
       if (!hadController || refreshing) return;
-      toast(tr('A new version of WoodBook is ready'), {
+      toast(tr('A new version of FurniCraft is ready'), {
         duration: 15000,
         action: {
           label: tr('Reload'),

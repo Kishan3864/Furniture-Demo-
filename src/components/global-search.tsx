@@ -71,7 +71,7 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
             ref={inputRef}
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder={t('Name, phone, order no. (WB-0012) or item...')}
+            placeholder={t('Name, phone, order no. (FC-0012) or item...')}
             className="h-14 flex-1 bg-transparent text-base outline-none placeholder:text-wood-400"
           />
           <button onClick={onClose} className="rounded-lg p-1.5 text-wood-600 hover:bg-wood-100" aria-label={t('Close')}>

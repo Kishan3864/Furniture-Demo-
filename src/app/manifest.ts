@@ -4,8 +4,8 @@ export const dynamic = 'force-static';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'WoodBook - Furniture Workshop',
-    short_name: 'WoodBook',
+    name: 'FurniCraft - Furniture Workshop',
+    short_name: 'FurniCraft',
     description: 'Orders, measurements, workers, deliveries and payments in one place.',
     id: '/',
     start_url: '/',
